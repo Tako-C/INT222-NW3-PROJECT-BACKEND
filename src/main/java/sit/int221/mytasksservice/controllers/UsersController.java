@@ -11,6 +11,7 @@ import sit.int221.mytasksservice.config.JwtTokenUtil;
 import sit.int221.mytasksservice.dtos.response.request.JwtRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.LoginResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.UsersDTO;
+import sit.int221.mytasksservice.dtos.response.response.jwtResponseDTO;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.services.JwtUserDetailsService;
 import sit.int221.mytasksservice.services.UsersService;
@@ -46,13 +47,15 @@ public class UsersController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody JwtRequestDTO jwtRequestDTO) {
+    public ResponseEntity<jwtResponseDTO> login(@Valid @RequestBody JwtRequestDTO jwtRequestDTO) {
         Users user = usersService.login(jwtRequestDTO.getUsername(), jwtRequestDTO.getPassword());
-//        if (user == null) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-//        }
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
         UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(jwtRequestDTO.getUsername());
         String token = jwtTokenUtil.generateToken(userDetails);
-        return ResponseEntity.ok(token);
+        jwtResponseDTO responseTokenDTO = modelMapper.map(token,jwtResponseDTO.class);
+        responseTokenDTO.setAccess_token(token);
+        return ResponseEntity.ok(responseTokenDTO);
     }
 }
