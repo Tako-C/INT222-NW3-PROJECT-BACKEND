@@ -28,7 +28,7 @@ public class UsersService {
     public Users login(String username, String rawPassword) {
         Users user = userRepository.findByUsername(username);
         if (user == null || !passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot modify this status");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username or password is incorrect");
         }
         return user;
     }

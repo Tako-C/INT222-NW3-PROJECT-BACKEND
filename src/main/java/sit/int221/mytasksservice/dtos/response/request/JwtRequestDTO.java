@@ -13,7 +13,7 @@ public class JwtRequestDTO {
 
     @NotBlank
     @Size(max = 50)
-    private String username;
+    private String userName;
 
     @Size(min = 8,max = 14)
     @NotBlank

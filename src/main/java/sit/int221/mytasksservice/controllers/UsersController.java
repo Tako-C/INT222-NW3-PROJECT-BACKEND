@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.config.JwtTokenUtil;
 import sit.int221.mytasksservice.dtos.response.request.JwtRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.LoginResponseDTO;
@@ -48,11 +49,17 @@ public class UsersController {
 
     @PostMapping("/login")
     public ResponseEntity<jwtResponseDTO> login(@Valid @RequestBody JwtRequestDTO jwtRequestDTO) {
-        Users user = usersService.login(jwtRequestDTO.getUsername(), jwtRequestDTO.getPassword());
+        Users user = usersService.login(jwtRequestDTO.getUserName(), jwtRequestDTO.getPassword());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(jwtRequestDTO.getUsername());
+        if (jwtRequestDTO.getUserName().trim().isEmpty() || jwtRequestDTO.getPassword().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password contains whitespace or is empty");
+        }
+        if (jwtRequestDTO.getUserName().length() > 50 || jwtRequestDTO.getPassword().length() < 8 || jwtRequestDTO.getPassword().length() > 14) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password length is invalid");
+        }
+        UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(jwtRequestDTO.getUserName());
         String token = jwtTokenUtil.generateToken(userDetails);
         jwtResponseDTO responseTokenDTO = modelMapper.map(token,jwtResponseDTO.class);
         responseTokenDTO.setAccess_token(token);

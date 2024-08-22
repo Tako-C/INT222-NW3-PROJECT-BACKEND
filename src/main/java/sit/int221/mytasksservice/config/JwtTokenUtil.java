@@ -44,7 +44,7 @@ public class JwtTokenUtil implements Serializable {
 
         AuthUser authUser = (AuthUser) userDetails;
         Map<String, Object> claims = new HashMap<>();
-        claims.put("iss", "http://localhost:8080/api/login");
+        claims.put("iss", "https://intproj23.sit.kmutt.ac.th");
         claims.put("name", authUser.getName());
         claims.put("oid", authUser.getOid());
         claims.put("email",authUser.getEmail());
@@ -61,8 +61,9 @@ public class JwtTokenUtil implements Serializable {
 //    }
     private String doGenerateToken(Map<String, Object> claims, String subject) {
         long now = System.currentTimeMillis();
-        Date issuedAt = new Date(now); // iat (issued at)
         Date expiration = new Date(now + JWT_TOKEN_VALIDITY); // exp (expiration)
+        Date issuedAt = new Date(now); // iat (issued at)
+
 
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
