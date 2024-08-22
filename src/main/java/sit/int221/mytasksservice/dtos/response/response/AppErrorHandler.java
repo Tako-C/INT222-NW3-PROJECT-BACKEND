@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -43,16 +44,19 @@ public class AppErrorHandler extends Throwable {
         Map<String, Object> errors = new LinkedHashMap<>();
         errors.put("timestamp", LocalDateTime.now());
         errors.put("status", HttpStatus.BAD_REQUEST.value());
-
-        ex.getBindingResult().getFieldErrors().forEach(fieldError -> {
-            Map<String, String> errorDetails = new LinkedHashMap<>();
-            errorDetails.put("field", fieldError.getField());
-            errorDetails.put("message", fieldError.getDefaultMessage());
-            errors.put(fieldError.getField(), errorDetails);
-        });
-
+        errors.put("message", ex.getMessage());
         return errors;
     }
 
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(ResponseStatusException.class)
+    public Map<String, Object> handleResponseStatusException(ResponseStatusException ex, HttpServletRequest request) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.UNAUTHORIZED.value());
+        response.put("message", ex.getReason());
+        response.put("instance", request.getRequestURI());
+        return response;
+    }
 
 }

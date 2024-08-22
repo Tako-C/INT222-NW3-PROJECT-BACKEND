@@ -17,8 +17,8 @@ public class UserSecurityConfig {
                 .authorizeRequests(authorize -> authorize
                         .requestMatchers("/api/login").permitAll()
                         .requestMatchers("/api/users").permitAll()
-                        .requestMatchers("/v2/tasks").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/v2/**").permitAll()
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(withDefaults());
         return httpSecurity.build();
