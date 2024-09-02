@@ -23,6 +23,9 @@ public class JwtTokenUtil implements Serializable {
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
+    public String getOid(String token) {
+        return getAllClaimsFromToken(token).get("oid", String.class);
+    }
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
@@ -44,7 +47,7 @@ public class JwtTokenUtil implements Serializable {
 
         AuthUser authUser = (AuthUser) userDetails;
         Map<String, Object> claims = new HashMap<>();
-        claims.put("iss", "https://intproj23.sit.kmutt.ac.th");
+        claims.put("iss", "https://intproj23.sit.kmutt.ac.th/nw3");
         claims.put("name", authUser.getName());
         claims.put("oid", authUser.getOid());
         claims.put("email",authUser.getEmail());
@@ -76,7 +79,8 @@ public class JwtTokenUtil implements Serializable {
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+//        final String username = getUsernameFromToken(token);
+//        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+            return !isTokenExpired(token);
     }
 }
