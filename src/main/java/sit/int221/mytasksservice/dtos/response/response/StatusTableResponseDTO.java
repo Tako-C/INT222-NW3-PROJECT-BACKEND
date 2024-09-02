@@ -4,7 +4,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class StatusTableResponseDTO {
-    private Integer id;
+    private Integer statusId;
     private String name;
     private String description;
 

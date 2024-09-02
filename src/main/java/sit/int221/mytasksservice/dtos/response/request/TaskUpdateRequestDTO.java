@@ -24,4 +24,7 @@ public class TaskUpdateRequestDTO {
     private String assignees;
 
     private String status;
+    private String boards;
+
+
 }
