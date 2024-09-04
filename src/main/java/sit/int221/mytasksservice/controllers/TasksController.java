@@ -57,6 +57,7 @@ public class TasksController {
     //=================================== Create Task ==================================================================
     @PostMapping("/{boardId}/tasks")
     public ResponseEntity<TaskAddRequestDTO> addStatuses(@Valid @RequestBody TaskAddRequestDTO taskAddRequestDTO, @PathVariable String boardId){
+        taskAddRequestDTO.setBoards(boardId);
         Tasks createTask = tasksService.createNewTask(taskAddRequestDTO,boardId);
         TaskAddRequestDTO addRequestDTO = modelMapper.map(createTask, TaskAddRequestDTO.class);
         URI location = URI.create("/"+boardId+"/tasks/");
@@ -67,6 +68,7 @@ public class TasksController {
 
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<TaskUpdateRequestDTO> updateStatuses (@RequestBody TaskAddRequestDTO taskAddRequestDTO, @PathVariable String boardId, @PathVariable Integer taskId) {
+        taskAddRequestDTO.setBoards(boardId);
         TaskDetailResponseDTO updatedTask = tasksService.getTaskByBoardIdAndByTaskID(boardId,taskId);
         TaskUpdateRequestDTO taskUpdateRequestDTO = modelMapper.map(updatedTask, TaskUpdateRequestDTO.class);
         taskUpdateRequestDTO.setTitle(taskAddRequestDTO.getTitle());

@@ -6,11 +6,13 @@ import org.springframework.stereotype.Service;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.BoardsResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
-import sit.int221.mytasksservice.dtos.response.response.StatusTableResponseDTO;
 import sit.int221.mytasksservice.models.primary.Boards;
+import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
+import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,6 +22,9 @@ public class BoardsService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private UsersRepository usersRepository;
 
     public Boards getBoards(String boards){
         return boardsRepository.findById(boards).orElseThrow(ItemNotFoundException::new);
@@ -38,4 +43,11 @@ public class BoardsService {
         return boardsRepository.save(boards);
     }
 
+    public Users findByOid(String oid) {
+        Users user = usersRepository.findByOid(oid);
+        if (user == null) {
+            throw new ItemNotFoundException();
+        }
+        return user;
+    }
 }

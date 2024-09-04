@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusUpdateRequestDTO;
-import sit.int221.mytasksservice.dtos.response.response.GeneralException;
 import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
 import sit.int221.mytasksservice.models.primary.Kradanboard;
 import sit.int221.mytasksservice.models.primary.Status;
@@ -47,7 +46,7 @@ public class StatusService {
     }
 
     public Status updateStatus(StatusUpdateRequestDTO statusUpdateRequestDTO) {
-        Status status = repository.findById(statusUpdateRequestDTO.getId())
+        Status status = repository.findById(statusUpdateRequestDTO.getStatusId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found"));
 
         if ("No Status".equals(status.getName()) || "Done".equals(status.getName())) {
