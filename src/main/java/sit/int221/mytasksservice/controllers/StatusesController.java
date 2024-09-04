@@ -49,6 +49,7 @@ public class StatusesController {
     }
     @PostMapping("/{boardId}/statuses")
     public ResponseEntity<StatusAddRequestDTO> addStatuses(@Valid @RequestBody StatusAddRequestDTO statusAddRequestDTO, @PathVariable String boardId){
+        statusAddRequestDTO.setBoards(boardId);
         Statuses createStatus = statusesService.createNewStatus(statusAddRequestDTO);
         StatusAddRequestDTO addRequestDTO = modelMapper.map(createStatus, StatusAddRequestDTO.class);
         URI location = URI.create("/"+boardId+"/statuses/");
@@ -57,6 +58,7 @@ public class StatusesController {
 
     @PutMapping("/{boardId}/statuses/{statusId}")
     public ResponseEntity<StatusUpdateRequestDTO> updateStatuses (@RequestBody StatusAddRequestDTO statusAddRequestDTO,@PathVariable String boardId, @PathVariable Integer statusId) {
+        statusAddRequestDTO.setBoards(boardId);
         StatusDetailResponseDTO updatedStatus = statusesService.getStatusesByBoard_idAndByStatusID(boardId,statusId);
         StatusUpdateRequestDTO updatedStatusDTO = modelMapper.map(updatedStatus, StatusUpdateRequestDTO.class);
         updatedStatusDTO.setName(statusAddRequestDTO.getName());

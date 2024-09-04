@@ -16,6 +16,7 @@ import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
 import sit.int221.mytasksservice.repositories.primary.StatusesRepository;
 import sit.int221.mytasksservice.repositories.primary.TasksRepository;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,8 +37,8 @@ public class StatusesService {
 
     public List<StatusTableResponseDTO> getAllStatusesByBoard_id(String boardsId) {
         Boards boards =  boardsRepository.findById(boardsId).orElseThrow(ItemNotFoundException::new);
-        return boards.getStatuses().stream().map(status ->
-            modelMapper.map(status, StatusTableResponseDTO.class)
+        return boards.getStatuses().stream().sorted(Comparator.comparing(Statuses::getStatusId)).map(status ->
+                modelMapper.map(status, StatusTableResponseDTO.class)
         ).collect(Collectors.toList());
     }
     public StatusDetailResponseDTO getStatusesByBoard_idAndByStatusID(String boardsId, Integer statusId) {

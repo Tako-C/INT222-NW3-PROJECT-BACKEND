@@ -69,7 +69,7 @@ public class StatussController {
     public ResponseEntity<StatusDeleteRequestDTO> deleteStatus(@PathVariable Integer id) {
         Status deletedStatus = service.getStatus(id);
         StatusDeleteRequestDTO deletedStatusDTO = modelMapper.map(deletedStatus, StatusDeleteRequestDTO.class);
-        deletedStatus.setId(deletedStatusDTO.getId());
+        deletedStatus.setId(deletedStatusDTO.getStatusId());
         deletedStatus.setName(deletedStatusDTO.getName());
         deletedStatus.setDescription(deletedStatusDTO.getDescription());
         service.deleteStatus(id);
