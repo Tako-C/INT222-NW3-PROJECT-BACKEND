@@ -74,7 +74,11 @@ public class TasksService {
 
     //============================== Get Task ==========================================================================
     public TaskDetailResponseDTO getTaskByBoardIdAndByTaskID(String boardId, Integer tasksId) {
-        Tasks task =  tasksRepository.findByIdAndBoardsBoardId(tasksId,boardId).orElseThrow(ItemNotFoundException::new);
+        if (boardsRepository.findById(boardId).isEmpty()) {
+            throw new ItemNotFoundException("Board not found");
+        }
+        Tasks task = tasksRepository.findByIdAndBoardsBoardId(tasksId, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Task not found in the specified Board"));
 
         TaskDetailResponseDTO taskDTO = modelMapper.map(task, TaskDetailResponseDTO.class);
         taskDTO.setStatusName(task.getStatus().getName());
@@ -85,38 +89,48 @@ public class TasksService {
 
 
     //=============================== create Task ======================================================================
-    public Tasks createNewTask(TaskAddRequestDTO taskAddRequestDTO , String boardsId) {
+    public Tasks createNewTask(TaskAddRequestDTO taskAddRequestDTO, String boardsId) {
+        if (!boardsRepository.existsById(boardsId)) {
+            throw new ItemNotFoundException("Not existing board");
+        }
+
         Tasks task = modelMapper.map(taskAddRequestDTO, Tasks.class);
         processTaskFields(task, taskAddRequestDTO.getDescription(), taskAddRequestDTO.getAssignees());
         validateStatus(taskAddRequestDTO.getStatus());
 
-
         Integer convertStatusId = Integer.valueOf(taskAddRequestDTO.getStatus());
-        task.setStatus(statusRepository.findByStatusIdAndBoardsBoardId(convertStatusId,boardsId)
+        task.setStatus(statusRepository.findByStatusIdAndBoardsBoardId(convertStatusId, boardsId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status Not Found")));
 
-        Boards boards = boardsRepository.findById(taskAddRequestDTO.getBoards()).orElseThrow(ItemNotFoundException::new);
+        Boards boards = boardsRepository.findById(boardsId).orElseThrow(ItemNotFoundException::new);
         task.setBoards(boards);
         return tasksRepository.save(task);
-
     }
 
     //======================================= Update Task =============================================================
-    public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO , Integer taskId) {
+    public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO, Integer taskId) {
+        Tasks task = tasksRepository.findById(taskId)
+                .orElseThrow(() -> new ItemNotFoundException("Not existing task"));
 
-        Tasks task = modelMapper.map(taskUpdateRequestDTO, Tasks.class);
-        processTaskFields(task, taskUpdateRequestDTO.getDescription(), taskUpdateRequestDTO.getAssignees());
-        validateStatus(taskUpdateRequestDTO.getStatus());
-        Tasks tasks = tasksRepository.findById(taskId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+        Boards boards = boardsRepository.findById(taskUpdateRequestDTO.getBoards())
+                .orElseThrow(() -> new ItemNotFoundException("Not existing board"));
 
-        Boards boards = boardsRepository.findById(taskUpdateRequestDTO.getBoards()).orElseThrow(ItemNotFoundException::new);
-        tasks.setTitle(taskUpdateRequestDTO.getTitle());
-        tasks.setDescription(taskUpdateRequestDTO.getDescription());
-        tasks.setAssignees(taskUpdateRequestDTO.getAssignees());
-        tasks.setTitle(taskUpdateRequestDTO.getTitle());
-        tasks.setBoards(boards);
+        // ตรวจสอบว่า Task อยู่ใน Board ที่ระบุหรือไม่
+        if (!task.getBoards().getBoardId().equals(boards.getBoardId())) {
+            throw new ItemNotFoundException("Task does not belong to the specified Board");
+        }
 
-        return tasksRepository.save(tasks);
+        task.setTitle(taskUpdateRequestDTO.getTitle());
+        task.setDescription(taskUpdateRequestDTO.getDescription());
+        task.setAssignees(taskUpdateRequestDTO.getAssignees());
+        task.setBoards(boards);
+
+        Statuses statuses = statusRepository.findById(Integer.valueOf(taskUpdateRequestDTO.getStatus()))
+                .orElseThrow(() -> new ItemNotFoundException("Not existing status"));
+
+        task.setStatus(statuses);
+
+        return tasksRepository.save(task);
     }
 
 
@@ -125,8 +139,13 @@ public class TasksService {
     //======================================= Delete Task =============================================================
 
     public Tasks deleteTask(String boardId, Integer tasksId) {
+        if (!boardsRepository.existsById(boardId)) {
+            throw new ItemNotFoundException("Not existing board");
+        }
+
         Tasks task = tasksRepository.findByIdAndBoardsBoardId(tasksId, boardId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+                .orElseThrow(() -> new ItemNotFoundException("Not existing task"));
+
         tasksRepository.delete(task);
         return task;
     }
@@ -168,5 +187,4 @@ public class TasksService {
             task.setAssignees(assignees);
         }
     }
-
 }

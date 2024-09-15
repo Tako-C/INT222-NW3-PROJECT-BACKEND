@@ -37,7 +37,7 @@ public class StatusService {
     }
 
     public Status createNewStatus(StatusAddRequestDTO statusAddRequestDTO) {
-        checkStatusNameExists(statusAddRequestDTO.getName());
+//        checkStatusNameExists(statusAddRequestDTO.getName());
 
         Status status = modelMapper.map(statusAddRequestDTO, Status.class);
         trimAndValidateStatusFields(status, statusAddRequestDTO.getName(), statusAddRequestDTO.getDescription());;

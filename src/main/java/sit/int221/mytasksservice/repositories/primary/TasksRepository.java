@@ -11,7 +11,6 @@ import java.util.Optional;
 
 public interface TasksRepository extends JpaRepository<Tasks, Integer> {
     List<Tasks> findByBoardsBoardId(String boardId,Sort sort);
-
     Optional<Tasks> findByIdAndBoardsBoardId(Integer id , String boardId);
     List<Tasks> findByStatus_StatusIdAndBoards_BoardId(Integer StatusId, String boardId);
 

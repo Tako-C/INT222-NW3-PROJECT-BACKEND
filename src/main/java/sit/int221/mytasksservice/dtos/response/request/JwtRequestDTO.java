@@ -10,13 +10,12 @@ import lombok.Setter;
 @Setter
 @Data
 public class JwtRequestDTO {
-
     @NotBlank
-    @Size(max = 50)
+    @Size(max = 50, message = "Username or password is invalid")
     private String userName;
 
-    @Size(min = 8,max = 14)
     @NotBlank
+    @Size(min = 8,max = 14, message = "Username or password is invalid")
     private String password;
 
 }

@@ -67,7 +67,7 @@ public class StatusesController {
         statusesService.updateStatus(updatedStatusDTO,statusId);
         return ResponseEntity.ok().body(updatedStatusDTO);
     }
-// ใช้ไม่ได้
+    // ใช้ไม่ได้
     @DeleteMapping("/{boardId}/statuses/{statusId}")
     public ResponseEntity<StatusDeleteRequestDTO>
     deleteStatus(@PathVariable Integer statusId , @PathVariable  String boardId) {

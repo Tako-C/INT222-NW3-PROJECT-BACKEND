@@ -15,8 +15,8 @@ import java.util.Set;
 public class BoardsAddRequestDTO {
     private String boardId;
     private String oid;
-    @NotBlank(message = "Board name is required")
-    @Size(min = 1, max = 120, message = "Board name must be between 1 to 120.")
+    @NotBlank
+    @Size(min = 1, max = 50, message = "Board name must between 1 - 50")
     private String board_name;
 
 }

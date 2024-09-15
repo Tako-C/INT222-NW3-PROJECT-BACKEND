@@ -16,5 +16,7 @@ public class TaskDetailResponseDTO {
     private String assignees;
     private String statusName;
     private String boardName;
+    private Timestamp createdOn;
+    private Timestamp updatedOn;
 }
 

@@ -41,35 +41,45 @@ public class StatusesService {
                 modelMapper.map(status, StatusTableResponseDTO.class)
         ).collect(Collectors.toList());
     }
-    public StatusDetailResponseDTO getStatusesByBoard_idAndByStatusID(String boardsId, Integer statusId) {
-        Statuses statuses =  statusesRepository.findByStatusIdAndBoardsBoardId(statusId,boardsId).orElseThrow(ItemNotFoundException::new);
 
+    public StatusDetailResponseDTO getStatusesByBoard_idAndByStatusID(String boardsId, Integer statusId) {
+        if (boardsRepository.findById(boardsId).isEmpty()) {
+            throw new ItemNotFoundException("Board not found");
+        }
+        Statuses statuses =  statusesRepository.findByStatusIdAndBoardsBoardId(statusId,boardsId)
+                .orElseThrow(() -> new ItemNotFoundException("Status not found in the specified Board"));
         StatusDetailResponseDTO statusDetailResponseDTO = modelMapper.map(statuses, StatusDetailResponseDTO.class);
         return statusDetailResponseDTO;
     }
 
     public Statuses createNewStatus(StatusAddRequestDTO statusAddRequestDTO) {
-        checkStatusNameExists(statusAddRequestDTO.getName());
+//        checkStatusNameExists(statusAddRequestDTO.getName());
+
+        Boards boards = boardsRepository.findById(statusAddRequestDTO.getBoards())
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
         Statuses status = modelMapper.map(statusAddRequestDTO, Statuses.class);
         trimAndValidateStatusFields(status, statusAddRequestDTO.getName(), statusAddRequestDTO.getDescription());
-
-        Boards boards = boardsRepository.findById(statusAddRequestDTO.getBoards()).orElseThrow(ItemNotFoundException::new);
         status.setBoards(boards);
+
         return statusesRepository.save(status);
     }
 
-    public Statuses updateStatus(StatusUpdateRequestDTO statusUpdateRequestDTO ,Integer statusId) {
-        checkStatusNameExists(statusUpdateRequestDTO.getName());
-        Statuses status = modelMapper.map(statusUpdateRequestDTO, Statuses.class);
-        trimAndValidateStatusFields(status, statusUpdateRequestDTO.getName(), statusUpdateRequestDTO.getDescription());
+    public Statuses updateStatus(StatusUpdateRequestDTO statusUpdateRequestDTO, Integer statusId) {
+        Statuses status = statusesRepository.findById(statusId)
+                .orElseThrow(() -> new ItemNotFoundException("Status not found"));
 
-        Statuses statuses = statusesRepository.findById(statusId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found"));
-
-        if ("No Status".equals(statuses.getName()) || "Done".equals(statuses.getName())) {
+        if ("No Status".equals(status.getName()) || "Done".equals(status.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot modify this status");
         }
-        Boards boards = boardsRepository.findById(statusUpdateRequestDTO.getBoards()).orElseThrow(ItemNotFoundException::new);
+
+        if (!statusId.equals(statusUpdateRequestDTO.getStatusId())) {
+            throw new ItemNotFoundException("Status does not belong to the specified Board");
+        }
+
+        Boards boards = boardsRepository.findById(statusUpdateRequestDTO.getBoards())
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
         status.setName(statusUpdateRequestDTO.getName());
         status.setDescription(statusUpdateRequestDTO.getDescription());
         status.setBoards(boards);
@@ -77,10 +87,12 @@ public class StatusesService {
         return statusesRepository.save(status);
     }
 
-
     public Statuses deleteStatus(Integer statusId, String boardId) {
+        if (boardsRepository.findById(boardId).isEmpty()) {
+            throw new ItemNotFoundException("Board not found");
+        }
         Statuses status = statusesRepository.findByStatusIdAndBoardsBoardId(statusId , boardId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found"));
+                .orElseThrow(() -> new ItemNotFoundException("Status not found"));
         if ("No Status".equals(status.getName()) || "Done".equals(status.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete this status");
         }
@@ -97,10 +109,10 @@ public class StatusesService {
         }
 
         Statuses oldStatus = statusesRepository.findByStatusIdAndBoardsBoardId(statusId,boardId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Source status not found"));
+                .orElseThrow(() -> new ItemNotFoundException("Status not found"));
 
         Statuses newStatus = statusesRepository.findByStatusIdAndBoardsBoardId(newStatusId,boardId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Destination status not found"));
+                .orElseThrow(() -> new ItemNotFoundException("New status not found"));
 
         List<Tasks> tasksWithThisStatus = tasksRepository.findByStatus_StatusIdAndBoards_BoardId(statusId,boardId);
 
@@ -130,11 +142,10 @@ public class StatusesService {
             status.setName(name.trim());
         }
     }
-
-    private void checkStatusNameExists(String name) {
-        if (statusesRepository.findByName(name) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name already exists!");
-        }
-    }
+//    private void checkStatusNameExists(String name) {
+//        if (statusesRepository.findByName(name) != null) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name already exists!");
+//        }
+//    }
 
 }

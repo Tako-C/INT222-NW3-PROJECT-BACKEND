@@ -22,3 +22,4 @@ public class StatusAddRequestDTO {
     private String boards;
 
 }
+

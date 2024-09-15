@@ -30,19 +30,19 @@ public class MyTasksController {
     private ModelMapper modelMapper;
 
     @GetMapping("/tasks")
-        public List<TaskTableResponseDTO> getAllTasks() {
-            List<Kradanboard> mytasks = service.getAllTasks();
-            return mytasks.stream()
-                    .map(task -> modelMapper.map(task, TaskTableResponseDTO.class))
-                    .collect(Collectors.toList());
-        }
+    public List<TaskTableResponseDTO> getAllTasks() {
+        List<Kradanboard> mytasks = service.getAllTasks();
+        return mytasks.stream()
+                .map(task -> modelMapper.map(task, TaskTableResponseDTO.class))
+                .collect(Collectors.toList());
+    }
     @GetMapping("/tasks/{id}")
     public TaskDetailResponseDTO getTaskById(@PathVariable Integer id) {
         Kradanboard task = service.getTask(id);
         return modelMapper.map(task, TaskDetailResponseDTO.class);
     }
 
-//------------------------ Sortby ------------------------
+    //------------------------ Sortby ------------------------
     @GetMapping(value = "/tasks", params = {"sortBy","FilterStatuses"})
     public List<TaskTableResponseDTO> getTaskAsc(@RequestParam(value = "sortBy",defaultValue = "createdOn") String sort,
                                                  @RequestParam(value = "FilterStatuses",required = false) List<String> filterStatuses) {
@@ -76,14 +76,14 @@ public class MyTasksController {
         Kradanboard updatedTask = service.getTask(id);
         TaskUpdateRequestDTO updatedTaskDTO = modelMapper.map(updatedTask, TaskUpdateRequestDTO.class);
 
-    updatedTaskDTO.setTitle(taskAddRequestDTO.getTitle());
-    updatedTaskDTO.setDescription(taskAddRequestDTO.getDescription());
-    updatedTaskDTO.setAssignees(taskAddRequestDTO.getAssignees());
-    updatedTaskDTO.setStatus(taskAddRequestDTO.getStatus());
+        updatedTaskDTO.setTitle(taskAddRequestDTO.getTitle());
+        updatedTaskDTO.setDescription(taskAddRequestDTO.getDescription());
+        updatedTaskDTO.setAssignees(taskAddRequestDTO.getAssignees());
+        updatedTaskDTO.setStatus(taskAddRequestDTO.getStatus());
 
-    service.updateTask(updatedTaskDTO);
-    return ResponseEntity.ok().body(updatedTaskDTO);
-}
+        service.updateTask(updatedTaskDTO);
+        return ResponseEntity.ok().body(updatedTaskDTO);
+    }
     @DeleteMapping("/tasks/{id}")
     public ResponseEntity<TaskDeleteRequestDTO> deleteTask(@PathVariable Integer id) {
         Kradanboard deletedTask = service.getTask(id);
