@@ -56,7 +56,7 @@ public class TasksController {
 
     //=================================== Create Task ==================================================================
     @PostMapping("/{boardId}/tasks")
-    public ResponseEntity<TaskAddRequestDTO> addStatuses(@Valid @RequestBody TaskAddRequestDTO taskAddRequestDTO, @PathVariable String boardId){
+    public ResponseEntity<TaskAddRequestDTO> addTask(@Valid @RequestBody TaskAddRequestDTO taskAddRequestDTO, @PathVariable String boardId){
         taskAddRequestDTO.setBoards(boardId);
         Tasks createTask = tasksService.createNewTask(taskAddRequestDTO,boardId);
         TaskAddRequestDTO addRequestDTO = modelMapper.map(createTask, TaskAddRequestDTO.class);

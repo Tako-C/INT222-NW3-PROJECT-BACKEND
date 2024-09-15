@@ -26,10 +26,10 @@ public class UserSecurityConfig {
                 .authorizeRequests(authorize -> authorize
                         .requestMatchers("/api/login").permitAll()
                         .anyRequest().authenticated())
-                        .exceptionHandling(exceptionHandling -> exceptionHandling
+                .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(authenticationExceptionHandler))
-                        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                        .httpBasic(withDefaults());
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .httpBasic(withDefaults());
         return  httpSecurity.build();
     }
 }

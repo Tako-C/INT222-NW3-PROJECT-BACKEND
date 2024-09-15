@@ -23,13 +23,13 @@ public class AuthUser extends Users implements UserDetails, Serializable {
 //        super(userName, password, new ArrayList<GrantedAuthority>());
 //    }
 
-public AuthUser(String oid, String name, String userName, String password, String email, String role, Collection<? extends GrantedAuthority> authorities) {
-    super(userName, password, authorities);
-    this.oid = oid;
-    this.name = name;
-    this.email = email;
-    this.role = role;
-}
+    public AuthUser(String oid, String name, String userName, String password, String email, String role, Collection<? extends GrantedAuthority> authorities) {
+        super(userName, password, authorities);
+        this.oid = oid;
+        this.name = name;
+        this.email = email;
+        this.role = role;
+    }
 
 //    @Override
 //    public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -66,5 +66,3 @@ public AuthUser(String oid, String name, String userName, String password, Strin
         return true;
     }
 }
-
-

@@ -17,12 +17,10 @@ public class Boards {
     private String oid;
     private String board_name;
 
-//    @OneToMany(mappedBy = "boards", cascade = CascadeType.ALL, orphanRemoval = true)
+    //    @OneToMany(mappedBy = "boards", cascade = CascadeType.ALL, orphanRemoval = true)
     @OneToMany(mappedBy = "boards",fetch = FetchType.EAGER)
     private Set<Statuses> statuses;
 
     @OneToMany(mappedBy = "boards")
     private Set<Tasks> tasks;
-
-
 }

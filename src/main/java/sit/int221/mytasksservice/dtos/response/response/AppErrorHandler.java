@@ -17,13 +17,12 @@ public class AppErrorHandler extends Throwable {
 
     @ResponseStatus(code = HttpStatus.NOT_FOUND)
     @ExceptionHandler(value = ItemNotFoundException.class)
-    public Map<String, Object> handleInvalidValueError(HttpServletRequest request) {
+    public Map<String, Object> handleItemNotFoundException(ItemNotFoundException ex, HttpServletRequest request) {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.NOT_FOUND.value());
-        response.put("message", HttpStatus.NOT_FOUND);
+        response.put("message", ex.getMessage()); // Use custom message
         response.put("instance", request.getRequestURI());
-
         return response;
     }
 
@@ -44,7 +43,7 @@ public class AppErrorHandler extends Throwable {
         Map<String, Object> errors = new LinkedHashMap<>();
         errors.put("timestamp", LocalDateTime.now());
         errors.put("status", HttpStatus.BAD_REQUEST.value());
-        errors.put("message", ex.getMessage());
+        errors.put("message", ex.getBindingResult().getFieldError().getDefaultMessage());
         return errors;
     }
 

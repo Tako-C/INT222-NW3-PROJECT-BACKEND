@@ -11,6 +11,6 @@ import java.util.Set;
 @Getter
 @Setter
 public class BoardsResponseDTO {
+    private String boardId;
     private String board_name;
-
 }

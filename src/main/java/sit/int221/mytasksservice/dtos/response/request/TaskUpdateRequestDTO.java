@@ -25,6 +25,5 @@ public class TaskUpdateRequestDTO {
 
     private String status;
     private String boards;
-
-
 }
+

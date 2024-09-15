@@ -8,11 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.mytasksservice.config.JwtTokenUtil;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
+import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.BoardsResponseDTO;
-import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
 import sit.int221.mytasksservice.models.primary.Boards;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.services.BoardsService;
+import sit.int221.mytasksservice.services.StatusesService;
 
 import java.net.URI;
 import java.util.List;
@@ -25,6 +26,9 @@ import java.util.List;
 public class BoardsController {
     @Autowired
     private BoardsService boardsService;
+
+    @Autowired
+    private StatusesService statusesService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -50,7 +54,21 @@ public class BoardsController {
         Boards createBoard = boardsService.createBoards(boardsAddRequestDTO);
         BoardsAddRequestDTO addRequestDTO = modelMapper.map(createBoard, BoardsAddRequestDTO.class);
 
+        createAndAddStatus("No Status", "The default status", generatedBoardId);
+        createAndAddStatus("Done", "Finished", generatedBoardId);
+
+
         URI location = URI.create("/boards/" + generatedBoardId);
         return ResponseEntity.created(location).body(addRequestDTO);
+    }
+
+
+    private void createAndAddStatus(String name, String description, String boardId) {
+        StatusAddRequestDTO createStatus = new StatusAddRequestDTO();
+        createStatus.setName(name);
+        createStatus.setDescription(description);
+        createStatus.setBoards(boardId);
+
+        statusesService.createNewStatus(createStatus);
     }
 }

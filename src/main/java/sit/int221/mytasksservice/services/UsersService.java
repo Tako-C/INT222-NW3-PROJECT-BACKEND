@@ -26,10 +26,17 @@ public class UsersService {
     }
 
     public Users login(String username, String rawPassword) {
+        if (username.trim().isEmpty() || rawPassword.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        if (username.length() > 50 || rawPassword.length() < 8 || rawPassword.length() > 14) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
         Users user = userRepository.findByUsername(username);
         if (user == null || !passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username or password is incorrect");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or Password is incorrect");
         }
         return user;
     }
 }
+

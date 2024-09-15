@@ -50,19 +50,13 @@ public class UsersController {
     @PostMapping("/login")
     public ResponseEntity<jwtResponseDTO> login(@Valid @RequestBody JwtRequestDTO jwtRequestDTO) {
         Users user = usersService.login(jwtRequestDTO.getUserName(), jwtRequestDTO.getPassword());
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-        if (jwtRequestDTO.getUserName().trim().isEmpty() || jwtRequestDTO.getPassword().trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password contains whitespace or is empty");
-        }
-        if (jwtRequestDTO.getUserName().length() > 50 || jwtRequestDTO.getPassword().length() < 8 || jwtRequestDTO.getPassword().length() > 14) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or password length is invalid");
-        }
+
         UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(jwtRequestDTO.getUserName());
         String token = jwtTokenUtil.generateToken(userDetails);
-        jwtResponseDTO responseTokenDTO = modelMapper.map(token,jwtResponseDTO.class);
+
+        jwtResponseDTO responseTokenDTO = new jwtResponseDTO();
         responseTokenDTO.setAccess_token(token);
+
         return ResponseEntity.ok(responseTokenDTO);
     }
 }

@@ -1,11 +1,9 @@
 package sit.int221.mytasksservice.dtos.response.request;
 
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-
 
 @Getter
 @Setter
@@ -25,7 +23,5 @@ public class TaskAddRequestDTO {
 
     private String status;
     private String boards;
-
-
 }
 
