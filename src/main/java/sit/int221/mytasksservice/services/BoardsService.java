@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class BoardsService {
     @Autowired
     private BoardsRepository boardsRepository;
@@ -37,6 +38,17 @@ public class BoardsService {
                 modelMapper.map(board, BoardsResponseDTO.class)
         ).collect(Collectors.toList());
     }
+    
+    public List<BoardsResponseDTO> getBoardsByOid(){
+        log.info(SecurityContextHolder.getContext().getAuthentication().getName());
+        Users users = usersRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        log.info(users.getOid());
+        List<Boards> boardsList = boardsRepository.findBoardsByOid(users.getOid());
+        return boardsList.stream().map(board ->
+                modelMapper.map(board, BoardsResponseDTO.class)
+        ).collect(Collectors.toList());
+    }
+
 
     public Boards createBoards(BoardsAddRequestDTO boardsAddRequestDTO){
         Boards boards = modelMapper.map(boardsAddRequestDTO, Boards.class);
