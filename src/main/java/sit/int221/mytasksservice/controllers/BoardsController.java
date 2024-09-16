@@ -53,10 +53,11 @@ public class BoardsController {
 
         Boards createBoard = boardsService.createBoards(boardsAddRequestDTO);
         BoardsAddRequestDTO addRequestDTO = modelMapper.map(createBoard, BoardsAddRequestDTO.class);
-
+        
         createAndAddStatus("No Status", "The default status", generatedBoardId);
         createAndAddStatus("Done", "Finished", generatedBoardId);
-
+        createAndAddStatus("Doing", "Being worked on", generatedBoardId);
+        createAndAddStatus("To Do", "This is To Do", generatedBoardId);
 
         URI location = URI.create("/boards/" + generatedBoardId);
         return ResponseEntity.created(location).body(addRequestDTO);
