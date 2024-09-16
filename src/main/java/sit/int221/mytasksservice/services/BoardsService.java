@@ -1,8 +1,10 @@
 package sit.int221.mytasksservice.services;
 
+import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
@@ -16,6 +18,7 @@ import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Log4j2
 @Service
 public class BoardsService {
     @Autowired
@@ -26,6 +29,21 @@ public class BoardsService {
 
     @Autowired
     private UsersRepository usersRepository;
+
+
+
+    public List<BoardsResponseDTO> getBoardsByOid(){
+        log.info(SecurityContextHolder.getContext().getAuthentication().getName());
+        Users users = usersRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+        log.info(users.getOid());
+        List<Boards> boardsList = boardsRepository.findBoardsByOid(users.getOid());
+        return boardsList.stream().map(board ->
+                modelMapper.map(board, BoardsResponseDTO.class)
+        ).collect(Collectors.toList());
+    }
+//    public List<BoardsResponseDTO> getAllBoardsByOid(){
+//        return boardsService.getBoardsByOid();
+//    }
 
     public Boards getBoards(String boards){
         return boardsRepository.findById(boards).orElseThrow(ItemNotFoundException::new);

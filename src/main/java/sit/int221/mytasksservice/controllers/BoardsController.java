@@ -37,8 +37,8 @@ public class BoardsController {
     private JwtTokenUtil jwtTokenUtil;
 
     @GetMapping("/boards")
-    public List<BoardsResponseDTO> getAllBoards(){
-        return boardsService.getAllBoards();
+    public List<BoardsResponseDTO> getAllBoardsByOid(){
+        return boardsService.getBoardsByOid();
     }
 
     @PostMapping("/boards")
