@@ -47,7 +47,6 @@ public class TasksController {
         return tasksService.getAllTasksByBoardId(boardId, sortBy, filterStatuses);
     }
 
-
     //================================ Get Task ========================================================================
     @GetMapping("/{boardId}/tasks/{tasksId}")
     public TaskDetailResponseDTO getTask(@PathVariable String boardId, @PathVariable Integer tasksId){
@@ -79,7 +78,6 @@ public class TasksController {
         tasksService.updateTask(taskUpdateRequestDTO,taskId);
         return ResponseEntity.ok().body(taskUpdateRequestDTO);
     }
-
 
     //=================================== Delete Task ==================================================================
     @DeleteMapping("/{boardId}/tasks/{tasksId}")

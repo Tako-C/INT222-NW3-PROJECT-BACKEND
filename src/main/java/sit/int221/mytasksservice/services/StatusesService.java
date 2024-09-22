@@ -3,18 +3,22 @@ package sit.int221.mytasksservice.services;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusUpdateRequestDTO;
+import sit.int221.mytasksservice.dtos.response.response.ForbiddenException;
 import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
 import sit.int221.mytasksservice.dtos.response.response.StatusDetailResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.StatusTableResponseDTO;
 import sit.int221.mytasksservice.models.primary.*;
+import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
 import sit.int221.mytasksservice.repositories.primary.StatusesRepository;
 import sit.int221.mytasksservice.repositories.primary.TasksRepository;
+import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
 import java.util.Comparator;
 import java.util.List;
@@ -34,8 +38,12 @@ public class StatusesService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private UsersRepository usersRepository;
+
 
     public List<StatusTableResponseDTO> getAllStatusesByBoard_id(String boardsId) {
+        checkBoardAccess(boardsId);
         Boards boards =  boardsRepository.findById(boardsId).orElseThrow(ItemNotFoundException::new);
         return boards.getStatuses().stream().sorted(Comparator.comparing(Statuses::getStatusId)).map(status ->
                 modelMapper.map(status, StatusTableResponseDTO.class)
@@ -43,6 +51,7 @@ public class StatusesService {
     }
 
     public StatusDetailResponseDTO getStatusesByBoard_idAndByStatusID(String boardsId, Integer statusId) {
+        checkBoardAccess(boardsId);
         if (boardsRepository.findById(boardsId).isEmpty()) {
             throw new ItemNotFoundException("Board not found");
         }
@@ -147,5 +156,23 @@ public class StatusesService {
 //            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name already exists!");
 //        }
 //    }
+
+    private Users checkBoardAccess(String boardId) {
+        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = null;
+
+        if (!username.equals("anonymousUser")) {
+            currentUser = usersRepository.findByUsername(username);
+        }
+
+        if (board.getVisibility().equals("private")) {
+            if (currentUser == null || !board.getOid().equals(currentUser.getOid())) {
+                throw new ForbiddenException("Access Denied");
+            }
+        }
+        return currentUser;
+    }
 
 }

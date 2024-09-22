@@ -54,16 +54,10 @@ public class BoardsService {
     public BoardDetailResponseDTO getBoardById(String id) {
         Boards board = boardsRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = null;
-        String username = null;
-//        String username = SecurityContextHolder.getContext().getAuthentication() != null
-//                ? SecurityContextHolder.getContext().getAuthentication().getName()
-//                : null;
-        if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            username = SecurityContextHolder.getContext().getAuthentication().getName();
-        }
 
-        if (username != null) {
+        if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
         }
 

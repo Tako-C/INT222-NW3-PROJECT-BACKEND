@@ -4,6 +4,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.StatusUpdateRequestDTO;
@@ -13,7 +14,9 @@ import sit.int221.mytasksservice.dtos.response.response.*;
 import sit.int221.mytasksservice.models.primary.Boards;
 import sit.int221.mytasksservice.models.primary.Statuses;
 import sit.int221.mytasksservice.models.primary.Tasks;
+import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.*;
+import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +30,9 @@ public class TasksService {
 
     @Autowired
     private BoardsRepository boardsRepository;
+
+    @Autowired
+    private UsersRepository usersRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -44,6 +50,7 @@ public class TasksService {
 
     //============================== Get TaskAll(Filter&Sort) ==========================================================
     public List<TaskTableResponseDTO> getAllTasksByBoardId(String boardId, String sortBy, List<String> filterStatuses) {
+        checkBoardAccess(boardId);
         // Determine the sort order
         Sort sort = Sort.by(Sort.Direction.ASC, sortBy != null ? sortBy : "createdOn");
         List<Tasks> tasks = tasksRepository.findByBoardsBoardId(boardId, sort);
@@ -74,9 +81,8 @@ public class TasksService {
 
     //============================== Get Task ==========================================================================
     public TaskDetailResponseDTO getTaskByBoardIdAndByTaskID(String boardId, Integer tasksId) {
-        if (boardsRepository.findById(boardId).isEmpty()) {
-            throw new ItemNotFoundException("Board not found");
-        }
+        checkBoardAccess(boardId);
+
         Tasks task = tasksRepository.findByIdAndBoardsBoardId(tasksId, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Task not found in the specified Board"));
 
@@ -186,5 +192,23 @@ public class TasksService {
         } else {
             task.setAssignees(assignees);
         }
+    }
+
+    private Users checkBoardAccess(String boardId) {
+        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = null;
+
+        if (!username.equals("anonymousUser")) {
+            currentUser = usersRepository.findByUsername(username);
+        }
+
+        if (board.getVisibility().equals("private")) {
+            if (currentUser == null || !board.getOid().equals(currentUser.getOid())) {
+                throw new ForbiddenException("Access Denied");
+            }
+        }
+        return currentUser;
     }
 }
