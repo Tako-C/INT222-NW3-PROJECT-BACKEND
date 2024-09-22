@@ -10,6 +10,7 @@ import sit.int221.mytasksservice.config.JwtTokenUtil;
 import sit.int221.mytasksservice.dtos.response.request.BoardUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
+import sit.int221.mytasksservice.dtos.response.response.BoardDetailResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.BoardsResponseDTO;
 import sit.int221.mytasksservice.models.primary.Boards;
 import sit.int221.mytasksservice.models.secondary.Users;
@@ -39,7 +40,7 @@ public class BoardsController {
 
     @GetMapping("/boards")
     public List<BoardsResponseDTO> getAllBoards(){
-        return boardsService.getBoardsByOid();
+        return boardsService.getAllBoards();
     }
 
     @PostMapping("/boards")
@@ -81,8 +82,8 @@ public class BoardsController {
     }
 
     @GetMapping("/boards/{boardId}")
-    public ResponseEntity<BoardsResponseDTO> getBoardById(@PathVariable("boardId") String id) {
-        BoardsResponseDTO board = boardsService.getBoardById(id);
+    public ResponseEntity<BoardDetailResponseDTO> getBoardById(@PathVariable("boardId") String id) {
+        BoardDetailResponseDTO board = boardsService.getBoardById(id);
         return ResponseEntity.ok(board);
     }
 

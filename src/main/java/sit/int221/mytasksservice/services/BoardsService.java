@@ -2,12 +2,9 @@ package sit.int221.mytasksservice.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.BoardUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.*;
@@ -31,7 +28,7 @@ public class BoardsService {
     @Autowired
     private UsersRepository usersRepository;
 
-    public List<BoardsResponseDTO> getBoardsByOid() {
+    public List<BoardsResponseDTO> getAllBoards() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         List<Boards> boardsList;
 
@@ -45,53 +42,33 @@ public class BoardsService {
         return boardsList.stream().map(board -> {
             BoardsResponseDTO dto = modelMapper.map(board, BoardsResponseDTO.class);
             dto.setOwner(getOwnerByOid(board.getOid()));
-
-//            dto.setTasks(board.getTasks().stream()
-//                    .map(task -> {
-//                        TaskTableResponseDTO taskDTO = modelMapper.map(task, TaskTableResponseDTO.class);
-//                        taskDTO.setBoardName(board.getBoard_name());
-//                        return taskDTO;
-//                    })
-//                    .collect(Collectors.toList()));
-//            dto.setStatuses(board.getStatuses().stream()
-//                    .map(status -> modelMapper.map(status, StatusTableResponseDTO.class))
-//                    .collect(Collectors.toList()));
             return dto;
         }).collect(Collectors.toList());
     }
-
-
-//    public List<BoardsResponseDTO> getAllBoards(){
-//        List<Boards> boards = boardsRepository.findAll();
-//        return boards.stream().map(board ->
-//                modelMapper.map(board, BoardsResponseDTO.class)
-//        ).collect(Collectors.toList());
-//    }
 
     public Boards createBoards(BoardsAddRequestDTO boardsAddRequestDTO){
         Boards boards = modelMapper.map(boardsAddRequestDTO, Boards.class);
         return boardsRepository.save(boards);
     }
 
-    public BoardsResponseDTO getBoardById(String id) {
+    public BoardDetailResponseDTO getBoardById(String id) {
         Boards board = boardsRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        // ตรวจสอบว่ามีผู้ใช้ล็อกอินหรือไม่
         Users currentUser = null;
-        String username = SecurityContextHolder.getContext().getAuthentication() != null
-                ? SecurityContextHolder.getContext().getAuthentication().getName()
-                : null;
+        String username = null;
+//        String username = SecurityContextHolder.getContext().getAuthentication() != null
+//                ? SecurityContextHolder.getContext().getAuthentication().getName()
+//                : null;
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            username = SecurityContextHolder.getContext().getAuthentication().getName();
+        }
 
         if (username != null) {
             currentUser = usersRepository.findByUsername(username);
         }
 
-        // ตรวจสอบสิทธิ์การเข้าถึง
-        if (currentUser != null && board.getOid().equals(currentUser.getOid())) {
-            return modelMapper.map(board, BoardsResponseDTO.class);
-        } else if (board.getVisibility().equals("public")) {
-            // ให้เข้าถึงบอร์ดสาธารณะได้
-            return modelMapper.map(board, BoardsResponseDTO.class);
+        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
+            return mapBoardDetails(board);
         } else {
             throw new ForbiddenException("Access Denied");
         }
@@ -102,12 +79,10 @@ public class BoardsService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(username);
 
-        // ตรวจสอบว่าเป็นเจ้าของหรือไม่
         if (!board.getOid().equals(currentUser.getOid())) {
             throw new ForbiddenException("Access Denied");
         }
 
-        // อัปเดต visibility
         board.setVisibility(boardupdateRequestDTO.getVisibility());
         boardsRepository.save(board);
 
@@ -132,5 +107,24 @@ public class BoardsService {
             return owner;
         }
         return null;
+    }
+
+    private BoardDetailResponseDTO mapBoardDetails(Boards board) {
+        BoardDetailResponseDTO dto = modelMapper.map(board, BoardDetailResponseDTO.class);
+        dto.setOwner(getOwnerByOid(board.getOid()));
+
+        dto.setTasks(board.getTasks().stream()
+                .map(task -> {
+                    TaskTableResponseDTO taskDTO = modelMapper.map(task, TaskTableResponseDTO.class);
+                    taskDTO.setBoardName(board.getBoard_name());
+                    return taskDTO;
+                })
+                .collect(Collectors.toList()));
+
+        dto.setStatuses(board.getStatuses().stream()
+                .map(status -> modelMapper.map(status, StatusTableResponseDTO.class))
+                .collect(Collectors.toList()));
+
+        return dto;
     }
 }

@@ -12,9 +12,11 @@ import java.util.List;
 import java.util.Set;
 @Getter
 @Setter
-public class BoardsResponseDTO {
+public class BoardDetailResponseDTO {
     private String boardId;
     private Owner owner;
     private String board_name;
     private String visibility;
+    private List<TaskTableResponseDTO> tasks;
+    private List<StatusTableResponseDTO> statuses;
 }
