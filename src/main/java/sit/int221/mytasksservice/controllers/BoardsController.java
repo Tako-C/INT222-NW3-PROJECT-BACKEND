@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.mytasksservice.config.JwtTokenUtil;
+import sit.int221.mytasksservice.dtos.response.request.BoardUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.BoardsResponseDTO;
@@ -37,15 +38,14 @@ public class BoardsController {
     private JwtTokenUtil jwtTokenUtil;
 
     @GetMapping("/boards")
-    // public List<BoardsResponseDTO> getAllBoards(){
-    //     return boardsService.getAllBoards();
-    // }
-    public List<BoardsResponseDTO> getAllBoardsByOid(){
+    public List<BoardsResponseDTO> getAllBoards(){
         return boardsService.getBoardsByOid();
     }
+
     @PostMapping("/boards")
     public ResponseEntity<BoardsAddRequestDTO> addBoards(@Valid @RequestBody BoardsAddRequestDTO boardsAddRequestDTO,
                                                          @RequestHeader("Authorization") String token ){
+
         String oid = jwtTokenUtil.getOid(token.replace("Bearer ", ""));
         Users user = boardsService.findByOid(oid);
 
@@ -53,13 +53,18 @@ public class BoardsController {
         boardsAddRequestDTO.setBoardId(generatedBoardId);
         boardsAddRequestDTO.setOid(user.getOid());
 
+        if (boardsAddRequestDTO.getVisibility() == null || boardsAddRequestDTO.getVisibility().isEmpty()) {
+            boardsAddRequestDTO.setVisibility("private");
+        }
+
         Boards createBoard = boardsService.createBoards(boardsAddRequestDTO);
         BoardsAddRequestDTO addRequestDTO = modelMapper.map(createBoard, BoardsAddRequestDTO.class);
-        
+
         createAndAddStatus("No Status", "The default status", generatedBoardId);
         createAndAddStatus("Done", "Finished", generatedBoardId);
         createAndAddStatus("Doing", "Being worked on", generatedBoardId);
         createAndAddStatus("To Do", "This is To Do", generatedBoardId);
+
 
         URI location = URI.create("/boards/" + generatedBoardId);
         return ResponseEntity.created(location).body(addRequestDTO);
@@ -73,5 +78,17 @@ public class BoardsController {
         createStatus.setBoards(boardId);
 
         statusesService.createNewStatus(createStatus);
+    }
+
+    @GetMapping("/boards/{boardId}")
+    public ResponseEntity<BoardsResponseDTO> getBoardById(@PathVariable("boardId") String id) {
+        BoardsResponseDTO board = boardsService.getBoardById(id);
+        return ResponseEntity.ok(board);
+    }
+
+    @PatchMapping("/boards/{boardId}")
+    public ResponseEntity<BoardUpdateRequestDTO> updateBoardVisibility(@PathVariable("boardId") String id, @Valid @RequestBody BoardUpdateRequestDTO boardUpdateRequestDTO) {
+        BoardUpdateRequestDTO updatedBoard = boardsService.updateBoardVisibility(id, boardUpdateRequestDTO);
+        return ResponseEntity.ok(updatedBoard);
     }
 }
