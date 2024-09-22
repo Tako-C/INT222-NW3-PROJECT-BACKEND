@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 @Entity
 @Data
-@Table(name = "mytasks")
+@Table(name = "tasks")
 public class Kradanboard {
 
     @Id
@@ -33,7 +33,7 @@ public class Kradanboard {
     private Timestamp updatedOn;
 
     @ManyToOne
-    @JoinColumn(name = "statuss_id")
+    @JoinColumn(name = "status_id")
     private Status status;
 
 }

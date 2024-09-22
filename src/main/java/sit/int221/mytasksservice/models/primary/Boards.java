@@ -3,6 +3,7 @@ package sit.int221.mytasksservice.models.primary;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import sit.int221.mytasksservice.models.secondary.Users;
 
 import java.util.Set;
 
@@ -21,6 +22,8 @@ public class Boards {
     @OneToMany(mappedBy = "boards",fetch = FetchType.EAGER)
     private Set<Statuses> statuses;
 
-    @OneToMany(mappedBy = "boards")
+    @OneToMany(mappedBy = "boards" ,fetch = FetchType.EAGER)
     private Set<Tasks> tasks;
+
+    private String visibility;
 }

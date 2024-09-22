@@ -7,10 +7,11 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name="statuss")
+@Table(name="statuses")
 public class Status {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "status_id")
     private Integer id;
     @Size(min=1, max=50)
     private String name;

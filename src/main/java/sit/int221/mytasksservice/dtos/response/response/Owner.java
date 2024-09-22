@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Owner {
-    private int oid;
+    private String oid;
     private String name;
 }
