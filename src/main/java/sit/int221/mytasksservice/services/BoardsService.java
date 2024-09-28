@@ -3,8 +3,10 @@ package sit.int221.mytasksservice.services;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.BoardUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.*;
@@ -13,6 +15,7 @@ import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
 import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 

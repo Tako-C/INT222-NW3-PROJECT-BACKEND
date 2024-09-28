@@ -52,11 +52,32 @@ public class UsersController {
         Users user = usersService.login(jwtRequestDTO.getUserName(), jwtRequestDTO.getPassword());
 
         UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(jwtRequestDTO.getUserName());
-        String token = jwtTokenUtil.generateToken(userDetails);
+        String accessToken = jwtTokenUtil.generateToken(userDetails);
+        String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails);
 
         jwtResponseDTO responseTokenDTO = new jwtResponseDTO();
-        responseTokenDTO.setAccess_token(token);
+        responseTokenDTO.setAccess_token(accessToken);
+        responseTokenDTO.setRefresh_token(refreshToken);
 
         return ResponseEntity.ok(responseTokenDTO);
+    }
+
+    @PostMapping("/token")
+    public ResponseEntity<jwtResponseDTO> refreshAccessToken(@RequestHeader("Authorization") String refreshToken) {
+        // ตรวจสอบว่า refreshToken ไม่หมดอายุและไม่ถูกแก้ไข
+        if (jwtTokenUtil.validateRefreshToken(refreshToken.substring(7))) {
+            String oid = jwtTokenUtil.getOid(refreshToken.substring(7));  // ดึง oid จาก refresh_token
+            UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(oid);  // โหลดข้อมูลผู้ใช้
+
+            // สร้าง access_token ใหม่
+            String newAccessToken = jwtTokenUtil.generateToken(userDetails);
+
+            jwtResponseDTO responseTokenDTO = new jwtResponseDTO();
+            responseTokenDTO.setAccess_token(newAccessToken);
+
+            return ResponseEntity.ok(responseTokenDTO);  // ส่งคืน access_token ใหม่
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+        }
     }
 }

@@ -78,7 +78,7 @@ public class StatusesService {
         Statuses status = statusesRepository.findById(statusId)
                 .orElseThrow(() -> new ItemNotFoundException("Status not found"));
 
-        if ("No Status".equals(status.getName()) || "Done".equals(status.getName())) {
+        if ("No Status".equals(status.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot modify this status");
         }
 

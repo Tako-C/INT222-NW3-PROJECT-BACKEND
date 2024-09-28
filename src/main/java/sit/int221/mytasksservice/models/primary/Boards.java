@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import sit.int221.mytasksservice.models.secondary.Users;
 
+import java.sql.Timestamp;
 import java.util.Set;
 
 @Entity
@@ -26,4 +27,6 @@ public class Boards {
     private Set<Tasks> tasks;
 
     private String visibility;
+    private Timestamp createdOn;
+    private Timestamp updatedOn;
 }

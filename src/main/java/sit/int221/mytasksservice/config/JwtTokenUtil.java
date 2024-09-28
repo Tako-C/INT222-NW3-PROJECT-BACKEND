@@ -52,7 +52,14 @@ public class JwtTokenUtil implements Serializable {
         claims.put("oid", authUser.getOid());
         claims.put("email",authUser.getEmail());
         claims.put("role", authUser.getRole());
-        return doGenerateToken(claims, userDetails.getUsername());
+        return doGenerateToken(claims, userDetails.getUsername(), JWT_TOKEN_VALIDITY);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("iss", "https://intproj23.sit.kmutt.ac.th/nw3");
+        claims.put("oid", ((AuthUser) userDetails).getOid()); // เพิ่มข้อมูลผู้ใช้
+        return doGenerateToken(claims, userDetails.getUsername(), 24 * 60 * 60 * 1000); // อายุ 24 ชั่วโมง
     }
 
     //    private String doGenerateToken(Map<String, Object> claims, String subject) {
@@ -62,9 +69,9 @@ public class JwtTokenUtil implements Serializable {
 //                .signWith(signatureAlgorithm, SECRET_KEY).compact();
 //
 //    }
-    private String doGenerateToken(Map<String, Object> claims, String subject) {
+    private String doGenerateToken(Map<String, Object> claims, String subject, long validity) {
         long now = System.currentTimeMillis();
-        Date expiration = new Date(now + JWT_TOKEN_VALIDITY); // exp (expiration)
+        Date expiration = new Date(now + validity); // exp (expiration)
         Date issuedAt = new Date(now); // iat (issued at)
 
 
@@ -80,5 +87,9 @@ public class JwtTokenUtil implements Serializable {
 
     public Boolean validateToken(String token, UserDetails userDetails) {
         return !isTokenExpired(token);
+    }
+
+    public Boolean validateRefreshToken(String token) {
+        return !isTokenExpired(token);  // เช็คว่าหมดอายุหรือยัง
     }
 }

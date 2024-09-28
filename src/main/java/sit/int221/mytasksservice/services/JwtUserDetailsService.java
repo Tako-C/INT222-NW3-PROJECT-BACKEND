@@ -3,6 +3,7 @@ package sit.int221.mytasksservice.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,26 +26,20 @@ public class JwtUserDetailsService implements  UserDetailsService {
 
 
     @Override
-    public  UserDetails loadUserByUsername(String userName ) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
         Users user = usersRepository.findByUsername(userName);
 
-        if (user == null ) {
+        if (user == null) {
+            user = usersRepository.findByOid(userName);
+        }
+
+        if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, userName + " does not exist !!");
         }
 
-        List<GrantedAuthority> roles = new ArrayList<>();
-        GrantedAuthority grantedAuthority = new GrantedAuthority() {
+        List<GrantedAuthority> roles = List.of(new SimpleGrantedAuthority(user.getRole()));
 
-            @Override
-            public String getAuthority() {
-                return user.getRole();
-            }
-        };
-        roles.add(grantedAuthority);
-
-        return new AuthUser(user.getOid(), user.getName(), user.getUsername(), user.getPassword(), user.getEmail() ,user.getRole(),roles);
-
-
+        return new AuthUser(user.getOid(), user.getName(), user.getUsername(), user.getPassword(), user.getEmail(), user.getRole(), roles);
     }
 
 }
