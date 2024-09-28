@@ -19,4 +19,6 @@ public class BoardDetailResponseDTO {
     private String visibility;
     private List<TaskTableResponseDTO> tasks;
     private List<StatusTableResponseDTO> statuses;
+    private Timestamp createdOn;
+    private Timestamp updatedOn;
 }
