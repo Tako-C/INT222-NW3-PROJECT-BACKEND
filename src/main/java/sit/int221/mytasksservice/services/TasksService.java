@@ -96,6 +96,14 @@ public class TasksService {
 
     //=============================== create Task ======================================================================
     public Tasks createNewTask(TaskAddRequestDTO taskAddRequestDTO, String boardsId) {
+        Boards board = boardsRepository.findById(boardsId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = usersRepository.findByUsername(username);
+
+        if (!board.getOid().equals(currentUser.getOid())) {
+            throw new ForbiddenException("Access Denied");
+        }
+
         if (!boardsRepository.existsById(boardsId)) {
             throw new ItemNotFoundException("Not existing board");
         }
@@ -115,6 +123,14 @@ public class TasksService {
 
     //======================================= Update Task =============================================================
     public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO, Integer taskId) {
+        Boards board = boardsRepository.findById(taskUpdateRequestDTO.getBoards()).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = usersRepository.findByUsername(username);
+
+        if (!board.getOid().equals(currentUser.getOid())) {
+            throw new ForbiddenException("Access Denied");
+        }
+
         Tasks task = tasksRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Not existing task"));
 
@@ -145,6 +161,14 @@ public class TasksService {
     //======================================= Delete Task =============================================================
 
     public Tasks deleteTask(String boardId, Integer tasksId) {
+        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = usersRepository.findByUsername(username);
+
+        if (!board.getOid().equals(currentUser.getOid())) {
+            throw new ForbiddenException("Access Denied");
+        }
+
         if (!boardsRepository.existsById(boardId)) {
             throw new ItemNotFoundException("Not existing board");
         }

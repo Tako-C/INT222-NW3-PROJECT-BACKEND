@@ -92,4 +92,5 @@ public class BoardsController {
         BoardUpdateRequestDTO updatedBoard = boardsService.updateBoardVisibility(id, boardUpdateRequestDTO);
         return ResponseEntity.ok(updatedBoard);
     }
+
 }

@@ -64,10 +64,10 @@ public class StatusesController {
         updatedStatusDTO.setName(statusAddRequestDTO.getName());
         updatedStatusDTO.setDescription(statusAddRequestDTO.getDescription());
         updatedStatusDTO.setBoards(statusAddRequestDTO.getBoards());
-        statusesService.updateStatus(updatedStatusDTO,statusId);
+        statusesService.updateStatus(updatedStatusDTO,statusId,boardId);
         return ResponseEntity.ok().body(updatedStatusDTO);
     }
-    // ใช้ไม่ได้
+
     @DeleteMapping("/{boardId}/statuses/{statusId}")
     public ResponseEntity<StatusDeleteRequestDTO>
     deleteStatus(@PathVariable Integer statusId , @PathVariable  String boardId) {
