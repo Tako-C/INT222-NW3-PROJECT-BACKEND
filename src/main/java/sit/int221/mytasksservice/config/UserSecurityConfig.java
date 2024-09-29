@@ -25,7 +25,7 @@ public class UserSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(csrf -> csrf.disable())
                 .authorizeRequests(authorize -> authorize
-                        .requestMatchers("/api/login").permitAll()
+                        .requestMatchers("/login").permitAll()
                         .requestMatchers("/v3/boards").permitAll()
                         .requestMatchers("/v3/boards/{boardId}").permitAll()
                         .requestMatchers("/v3/boards/{boardId}/tasks/**").permitAll()

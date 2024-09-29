@@ -57,7 +57,7 @@ public class StatusesController {
     }
 
     @PutMapping("/{boardId}/statuses/{statusId}")
-    public ResponseEntity<StatusUpdateRequestDTO> updateStatuses (@RequestBody StatusAddRequestDTO statusAddRequestDTO,@PathVariable String boardId, @PathVariable Integer statusId) {
+    public ResponseEntity<StatusUpdateRequestDTO> updateStatuses (@Valid @RequestBody StatusAddRequestDTO statusAddRequestDTO,@PathVariable String boardId, @PathVariable Integer statusId) {
         statusAddRequestDTO.setBoards(boardId);
         StatusDetailResponseDTO updatedStatus = statusesService.getStatusesByBoard_idAndByStatusID(boardId,statusId);
         StatusUpdateRequestDTO updatedStatusDTO = modelMapper.map(updatedStatus, StatusUpdateRequestDTO.class);

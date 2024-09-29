@@ -19,6 +19,10 @@ public class JwtTokenUtil implements Serializable {
 
     @Value("#{${jwt.max-token-interval-hour}*60*60*1000}")
     private long JWT_TOKEN_VALIDITY;
+
+    @Value("#{24*60*60*1000}")
+    private long JWT_REFRESH_TOKEN_VALIDITY;
+
     SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -58,8 +62,8 @@ public class JwtTokenUtil implements Serializable {
     public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("iss", "https://intproj23.sit.kmutt.ac.th/nw3");
-        claims.put("oid", ((AuthUser) userDetails).getOid()); // เพิ่มข้อมูลผู้ใช้
-        return doGenerateToken(claims, userDetails.getUsername(), 24 * 60 * 60 * 1000); // อายุ 24 ชั่วโมง
+        claims.put("oid", ((AuthUser) userDetails).getOid());
+        return doGenerateToken(claims, userDetails.getUsername(), JWT_REFRESH_TOKEN_VALIDITY);
     }
 
     //    private String doGenerateToken(Map<String, Object> claims, String subject) {
@@ -69,6 +73,7 @@ public class JwtTokenUtil implements Serializable {
 //                .signWith(signatureAlgorithm, SECRET_KEY).compact();
 //
 //    }
+
     private String doGenerateToken(Map<String, Object> claims, String subject, long validity) {
         long now = System.currentTimeMillis();
         Date expiration = new Date(now + validity); // exp (expiration)
@@ -90,6 +95,6 @@ public class JwtTokenUtil implements Serializable {
     }
 
     public Boolean validateRefreshToken(String token) {
-        return !isTokenExpired(token);  // เช็คว่าหมดอายุหรือยัง
+        return !isTokenExpired(token);
     }
 }

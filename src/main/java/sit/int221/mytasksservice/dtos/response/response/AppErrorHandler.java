@@ -40,6 +40,16 @@ public class AppErrorHandler extends Throwable {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(BadRequestException.class)
+    public Map<String, Object> handleArgumentExceptions(BadRequestException ex) {
+        Map<String, Object> errors = new LinkedHashMap<>();
+        errors.put("timestamp", LocalDateTime.now());
+        errors.put("status", HttpStatus.BAD_REQUEST.value());
+        errors.put("message", ex.getMessage());
+        return errors;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, Object> errors = new LinkedHashMap<>();

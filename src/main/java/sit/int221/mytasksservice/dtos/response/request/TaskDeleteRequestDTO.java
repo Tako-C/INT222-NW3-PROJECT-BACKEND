@@ -10,5 +10,4 @@ public class TaskDeleteRequestDTO {
     private String title;
     private String assignees;
     private String statusName;
-
 }

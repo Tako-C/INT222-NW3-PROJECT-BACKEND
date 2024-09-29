@@ -2,17 +2,11 @@ package sit.int221.mytasksservice.services;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusUpdateRequestDTO;
-import sit.int221.mytasksservice.dtos.response.response.ForbiddenException;
-import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
-import sit.int221.mytasksservice.dtos.response.response.StatusDetailResponseDTO;
-import sit.int221.mytasksservice.dtos.response.response.StatusTableResponseDTO;
+import sit.int221.mytasksservice.dtos.response.response.*;
 import sit.int221.mytasksservice.models.primary.*;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
@@ -62,13 +56,7 @@ public class StatusesService {
     }
 
     public Statuses createNewStatus(StatusAddRequestDTO statusAddRequestDTO) {
-        Boards board = boardsRepository.findById(statusAddRequestDTO.getBoards()).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
+        Users currentUser = checkBoardAccess(statusAddRequestDTO.getBoards());
 
         Boards boards = boardsRepository.findById(statusAddRequestDTO.getBoards())
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
@@ -81,19 +69,13 @@ public class StatusesService {
     }
 
     public Statuses updateStatus(StatusUpdateRequestDTO statusUpdateRequestDTO, Integer statusId, String boardId) {
-        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
+        Users currentUser = checkBoardAccess(boardId);
 
         Statuses status = statusesRepository.findById(statusId)
                 .orElseThrow(() -> new ItemNotFoundException("Status not found"));
 
         if ("No Status".equals(status.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot modify this status");
+            throw new BadRequestException("Cannot update this status");
         }
 
         if (!statusId.equals(statusUpdateRequestDTO.getStatusId())) {
@@ -111,40 +93,26 @@ public class StatusesService {
     }
 
     public Statuses deleteStatus(Integer statusId, String boardId) {
-        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
+        Users currentUser = checkBoardAccess(boardId);
 
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
-
-        if (boardsRepository.findById(boardId).isEmpty()) {
-            throw new ItemNotFoundException("Board not found");
-        }
         Statuses status = statusesRepository.findByStatusIdAndBoardsBoardId(statusId , boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Status not found"));
+
         if ("No Status".equals(status.getName()) || "Done".equals(status.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete this status");
+            throw new BadRequestException("Cannot delete this status");
         }
         if (!tasksRepository.findByStatus_StatusIdAndBoards_BoardId(statusId ,boardId ).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete status with associated tasks");
+            throw new BadRequestException("Cannot delete status with associated tasks");
         }
         statusesRepository.delete(status);
         return status;
     }
 
     public Statuses reassignAndDeleteStatus(Integer statusId, Integer newStatusId, String boardId) {
-        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
+        Users currentUser = checkBoardAccess(boardId);
 
         if (statusId.equals(newStatusId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Source and destination statuses cannot be the same");
+            throw new BadRequestException("Source and destination statuses cannot be the same");
         }
 
         Statuses oldStatus = statusesRepository.findByStatusIdAndBoardsBoardId(statusId,boardId)
@@ -156,7 +124,7 @@ public class StatusesService {
         List<Tasks> tasksWithThisStatus = tasksRepository.findByStatus_StatusIdAndBoards_BoardId(statusId,boardId);
 
         if (tasksWithThisStatus.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Destination status not found");
+            throw new BadRequestException("Destination status not found");
         }
         tasksWithThisStatus.forEach(task -> {
             task.setStatus(newStatus);
@@ -169,10 +137,10 @@ public class StatusesService {
 
     private void trimAndValidateStatusFields(Statuses status, String name, String description) {
         if (name == null || name.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name cannot be null or empty!");
+            throw new BadRequestException("Status name cannot be null or empty!");
         }
         if (description != null && description.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status description cannot be empty!");
+            throw new BadRequestException("Status description cannot be empty!");
         }
         if (description != null){
             status.setDescription(description.trim());
@@ -189,9 +157,12 @@ public class StatusesService {
 
     private Users checkBoardAccess(String boardId) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = null;
+        Users currentUser =  usersRepository.findByUsername(username);
+
+        if (!board.getOid().equals(currentUser.getOid())) {
+            throw new ForbiddenException("Access Denied");
+        }
 
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
@@ -204,5 +175,4 @@ public class StatusesService {
         }
         return currentUser;
     }
-
 }

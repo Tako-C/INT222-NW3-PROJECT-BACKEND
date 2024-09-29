@@ -66,7 +66,7 @@ public class TasksController {
     //=================================== Update Task ==================================================================
 
     @PutMapping("/{boardId}/tasks/{taskId}")
-    public ResponseEntity<TaskUpdateRequestDTO> updateStatuses (@RequestBody TaskAddRequestDTO taskAddRequestDTO, @PathVariable String boardId, @PathVariable Integer taskId) {
+    public ResponseEntity<TaskUpdateRequestDTO> updateStatuses (@Valid @RequestBody TaskAddRequestDTO taskAddRequestDTO, @PathVariable String boardId, @PathVariable Integer taskId) {
         taskAddRequestDTO.setBoards(boardId);
         TaskDetailResponseDTO updatedTask = tasksService.getTaskByBoardIdAndByTaskID(boardId,taskId);
         TaskUpdateRequestDTO taskUpdateRequestDTO = modelMapper.map(updatedTask, TaskUpdateRequestDTO.class);

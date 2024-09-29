@@ -96,17 +96,7 @@ public class TasksService {
 
     //=============================== create Task ======================================================================
     public Tasks createNewTask(TaskAddRequestDTO taskAddRequestDTO, String boardsId) {
-        Boards board = boardsRepository.findById(boardsId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
-
-        if (!boardsRepository.existsById(boardsId)) {
-            throw new ItemNotFoundException("Not existing board");
-        }
+        Users currentUser = checkBoardAccess(boardsId);
 
         Tasks task = modelMapper.map(taskAddRequestDTO, Tasks.class);
         processTaskFields(task, taskAddRequestDTO.getDescription(), taskAddRequestDTO.getAssignees());
@@ -114,7 +104,7 @@ public class TasksService {
 
         Integer convertStatusId = Integer.valueOf(taskAddRequestDTO.getStatus());
         task.setStatus(statusRepository.findByStatusIdAndBoardsBoardId(convertStatusId, boardsId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status Not Found")));
+                .orElseThrow(() -> new BadRequestException("Status Not Found")));
 
         Boards boards = boardsRepository.findById(boardsId).orElseThrow(ItemNotFoundException::new);
         task.setBoards(boards);
@@ -123,13 +113,7 @@ public class TasksService {
 
     //======================================= Update Task =============================================================
     public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO, Integer taskId) {
-        Boards board = boardsRepository.findById(taskUpdateRequestDTO.getBoards()).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
+        Users currentUser = checkBoardAccess(taskUpdateRequestDTO.getBoards());
 
         Tasks task = tasksRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Not existing task"));
@@ -137,7 +121,6 @@ public class TasksService {
         Boards boards = boardsRepository.findById(taskUpdateRequestDTO.getBoards())
                 .orElseThrow(() -> new ItemNotFoundException("Not existing board"));
 
-        // ตรวจสอบว่า Task อยู่ใน Board ที่ระบุหรือไม่
         if (!task.getBoards().getBoardId().equals(boards.getBoardId())) {
             throw new ItemNotFoundException("Task does not belong to the specified Board");
         }
@@ -161,17 +144,7 @@ public class TasksService {
     //======================================= Delete Task =============================================================
 
     public Tasks deleteTask(String boardId, Integer tasksId) {
-        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
-
-        if (!boardsRepository.existsById(boardId)) {
-            throw new ItemNotFoundException("Not existing board");
-        }
+        Users currentUser = checkBoardAccess(boardId);
 
         Tasks task = tasksRepository.findByIdAndBoardsBoardId(tasksId, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Not existing task"));
@@ -220,9 +193,12 @@ public class TasksService {
 
     private Users checkBoardAccess(String boardId) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
-
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = null;
+        Users currentUser =  usersRepository.findByUsername(username);
+
+        if (!board.getOid().equals(currentUser.getOid())) {
+            throw new ForbiddenException("Access Denied");
+        }
 
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);

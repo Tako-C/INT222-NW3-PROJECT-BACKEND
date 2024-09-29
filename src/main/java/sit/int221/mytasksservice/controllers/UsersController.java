@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.config.JwtTokenUtil;
 import sit.int221.mytasksservice.dtos.response.request.JwtRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.LoginResponseDTO;
+import sit.int221.mytasksservice.dtos.response.response.RefreshTokenDTO;
 import sit.int221.mytasksservice.dtos.response.response.UsersDTO;
 import sit.int221.mytasksservice.dtos.response.response.jwtResponseDTO;
 import sit.int221.mytasksservice.models.secondary.Users;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = {"http://localhost:5173","http://ip23nw3.sit.kmutt.ac.th:3333","http://intproj23.sit.kmutt.ac.th"})
-@RequestMapping("/api")
+//@RequestMapping("")
 
 public class UsersController {
 
@@ -63,19 +64,17 @@ public class UsersController {
     }
 
     @PostMapping("/token")
-    public ResponseEntity<jwtResponseDTO> refreshAccessToken(@RequestHeader("Authorization") String refreshToken) {
-        // ตรวจสอบว่า refreshToken ไม่หมดอายุและไม่ถูกแก้ไข
+    public ResponseEntity<RefreshTokenDTO> refreshAccessToken(@RequestHeader("Authorization") String refreshToken) {
         if (jwtTokenUtil.validateRefreshToken(refreshToken.substring(7))) {
-            String oid = jwtTokenUtil.getOid(refreshToken.substring(7));  // ดึง oid จาก refresh_token
-            UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(oid);  // โหลดข้อมูลผู้ใช้
+            String oid = jwtTokenUtil.getOid(refreshToken.substring(7));
+            UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(oid);
 
-            // สร้าง access_token ใหม่
             String newAccessToken = jwtTokenUtil.generateToken(userDetails);
 
-            jwtResponseDTO responseTokenDTO = new jwtResponseDTO();
+            RefreshTokenDTO responseTokenDTO = new RefreshTokenDTO();
             responseTokenDTO.setAccess_token(newAccessToken);
 
-            return ResponseEntity.ok(responseTokenDTO);  // ส่งคืน access_token ใหม่
+            return ResponseEntity.ok(responseTokenDTO);
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
         }
