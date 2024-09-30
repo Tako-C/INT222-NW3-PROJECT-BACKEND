@@ -26,10 +26,10 @@ public class UserSecurityConfig {
         httpSecurity.csrf(csrf -> csrf.disable())
                 .authorizeRequests(authorize -> authorize
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers("/v3/boards").permitAll()
-                        .requestMatchers("/v3/boards/{boardId}").permitAll()
-                        .requestMatchers("/v3/boards/{boardId}/tasks/**").permitAll()
-                        .requestMatchers("/v3/boards/{boardId}/statuses/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/v3/boards").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/v3/boards/{boardId}").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/v3/boards/{boardId}/tasks/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/v3/boards/{boardId}/statuses/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(authenticationExceptionHandler))

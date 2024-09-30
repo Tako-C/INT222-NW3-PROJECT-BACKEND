@@ -10,10 +10,13 @@ import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusDeleteRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.TaskDeleteRequestDTO;
+import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
 import sit.int221.mytasksservice.dtos.response.response.StatusDetailResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.StatusTableResponseDTO;
+import sit.int221.mytasksservice.models.primary.Boards;
 import sit.int221.mytasksservice.models.primary.Statuses;
 import sit.int221.mytasksservice.models.primary.Tasks;
+import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
 import sit.int221.mytasksservice.services.BoardsService;
 import sit.int221.mytasksservice.services.StatusesService;
 
@@ -36,6 +39,9 @@ public class StatusesController {
 
 //    @Autowired
 //    private BoardsService boardsService;
+
+    @Autowired
+    private BoardsRepository boardsRepository;
 
 
     @GetMapping("/{boardId}/statuses")

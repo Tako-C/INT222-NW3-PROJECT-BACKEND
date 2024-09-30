@@ -1,6 +1,7 @@
 package sit.int221.mytasksservice.dtos.response.response;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import sit.int221.mytasksservice.services.TasksService;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -81,8 +83,31 @@ public class AppErrorHandler extends Throwable {
         return response;
     }
 
+    @Autowired
+    private TasksService tasksService;
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+    public ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String boardId = extractBoardIdFromUri(uri);
+
+        if (boardId != null) {
+            try {
+                tasksService.checkBoardAccess(boardId);
+            } catch (ItemNotFoundException e) {
+                Map<String, Object> errors = new LinkedHashMap<>();
+                errors.put("timestamp", LocalDateTime.now());
+                errors.put("status", HttpStatus.NOT_FOUND.value());
+                errors.put("message", "Board not found");
+                return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
+            } catch (ForbiddenException e) {
+                Map<String, Object> errors = new LinkedHashMap<>();
+                errors.put("timestamp", LocalDateTime.now());
+                errors.put("status", HttpStatus.FORBIDDEN.value());
+                errors.put("message", "Access Denied: You do not have permission to access this resource");
+                return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+            }
+        }
         Map<String, Object> errors = new LinkedHashMap<>();
         errors.put("timestamp", LocalDateTime.now());
         errors.put("status", HttpStatus.BAD_REQUEST.value());
@@ -90,5 +115,14 @@ public class AppErrorHandler extends Throwable {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
+    private String extractBoardIdFromUri(String uri) {
+        String[] segments = uri.split("/");
+        for (int i = 0; i < segments.length; i++) {
+            if (segments[i].equals("boards") && (i + 1) < segments.length) {
+                return segments[i + 1]; // คืนค่าบอร์ด ID
+            }
+        }
+        return null;
+    }
 
 }

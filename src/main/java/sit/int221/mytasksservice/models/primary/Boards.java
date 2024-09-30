@@ -27,6 +27,10 @@ public class Boards {
     private Set<Tasks> tasks;
 
     private String visibility;
+
+    @Column(insertable = false, updatable = false)
     private Timestamp createdOn;
+
+    @Column(insertable = false, updatable = false)
     private Timestamp updatedOn;
 }

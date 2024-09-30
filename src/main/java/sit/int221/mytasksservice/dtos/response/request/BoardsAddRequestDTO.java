@@ -25,5 +25,4 @@ public class BoardsAddRequestDTO {
 
     @Pattern(regexp = "^(private|public)$", message = "Visibility must be 'private' or 'public'")
     private String visibility;
-
 }

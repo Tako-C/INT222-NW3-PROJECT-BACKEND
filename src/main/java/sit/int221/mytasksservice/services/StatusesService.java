@@ -2,8 +2,10 @@ package sit.int221.mytasksservice.services;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.*;
@@ -37,23 +39,59 @@ public class StatusesService {
 
 
     public List<StatusTableResponseDTO> getAllStatusesByBoard_id(String boardsId) {
-        checkBoardAccess(boardsId);
-        Boards boards =  boardsRepository.findById(boardsId).orElseThrow(ItemNotFoundException::new);
-        return boards.getStatuses().stream().sorted(Comparator.comparing(Statuses::getStatusId)).map(status ->
-                modelMapper.map(status, StatusTableResponseDTO.class)
-        ).collect(Collectors.toList());
+        // ดึงบอร์ดและตรวจสอบการเข้าถึง
+        Boards board = boardsRepository.findById(boardsId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = null;
+
+        // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+        if (!username.equals("anonymousUser")) {
+            currentUser = usersRepository.findByUsername(username);
+        }
+
+        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
+        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
+            // เข้าถึงสถานะในบอร์ดได้
+            return board.getStatuses().stream()
+                    .sorted(Comparator.comparing(Statuses::getStatusId))
+                    .map(status -> modelMapper.map(status, StatusTableResponseDTO.class))
+                    .collect(Collectors.toList());
+        } else {
+            // ถ้าไม่สามารถเข้าถึงได้ ให้โยนข้อผิดพลาด
+            throw new ForbiddenException("Access Denied");
+        }
     }
 
+
     public StatusDetailResponseDTO getStatusesByBoard_idAndByStatusID(String boardsId, Integer statusId) {
-        checkBoardAccess(boardsId);
-        if (boardsRepository.findById(boardsId).isEmpty()) {
-            throw new ItemNotFoundException("Board not found");
+        // ดึงบอร์ดและตรวจสอบการเข้าถึง
+        Boards board = boardsRepository.findById(boardsId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = null;
+
+        // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+        if (!username.equals("anonymousUser")) {
+            currentUser = usersRepository.findByUsername(username);
         }
-        Statuses statuses =  statusesRepository.findByStatusIdAndBoardsBoardId(statusId,boardsId)
-                .orElseThrow(() -> new ItemNotFoundException("Status not found in the specified Board"));
-        StatusDetailResponseDTO statusDetailResponseDTO = modelMapper.map(statuses, StatusDetailResponseDTO.class);
-        return statusDetailResponseDTO;
+
+        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
+        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
+            // เข้าถึงสถานะในบอร์ดได้
+            Statuses statuses = statusesRepository.findByStatusIdAndBoardsBoardId(statusId, boardsId)
+                    .orElseThrow(() -> new ItemNotFoundException("Status not found in the specified Board"));
+
+            StatusDetailResponseDTO statusDetailResponseDTO = modelMapper.map(statuses, StatusDetailResponseDTO.class);
+            return statusDetailResponseDTO;
+        } else {
+            // ถ้าไม่สามารถเข้าถึงได้ ให้โยนข้อผิดพลาด
+            throw new ForbiddenException("Access Denied");
+        }
     }
+
 
     public Statuses createNewStatus(StatusAddRequestDTO statusAddRequestDTO) {
         Users currentUser = checkBoardAccess(statusAddRequestDTO.getBoards());
@@ -158,20 +196,17 @@ public class StatusesService {
     private Users checkBoardAccess(String boardId) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser =  usersRepository.findByUsername(username);
-
-        if (!board.getOid().equals(currentUser.getOid())) {
-            throw new ForbiddenException("Access Denied");
-        }
+        Users currentUser =  null;
 
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
-        }
-
-        if (board.getVisibility().equals("private")) {
-            if (currentUser == null || !board.getOid().equals(currentUser.getOid())) {
+            if (!board.getOid().equals(currentUser.getOid())) {
                 throw new ForbiddenException("Access Denied");
             }
+        }
+
+        if (currentUser == null && board.getVisibility().equals("private")) {
+            throw new ForbiddenException("Access Denied");
         }
         return currentUser;
     }

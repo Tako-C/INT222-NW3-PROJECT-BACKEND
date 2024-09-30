@@ -88,7 +88,7 @@ public class BoardsController {
     }
 
     @PatchMapping("/boards/{boardId}")
-    public ResponseEntity<BoardUpdateRequestDTO> updateBoardVisibility(@PathVariable("boardId") String id, @Valid @RequestBody BoardUpdateRequestDTO boardUpdateRequestDTO) {
+    public ResponseEntity<BoardUpdateRequestDTO> updateBoardVisibility(@PathVariable("boardId") String id,@Valid @RequestBody BoardUpdateRequestDTO boardUpdateRequestDTO) {
         BoardUpdateRequestDTO updatedBoard = boardsService.updateBoardVisibility(id, boardUpdateRequestDTO);
         return ResponseEntity.ok(updatedBoard);
     }
