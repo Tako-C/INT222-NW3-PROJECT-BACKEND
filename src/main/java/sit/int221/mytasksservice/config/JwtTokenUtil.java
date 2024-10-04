@@ -97,4 +97,8 @@ public class JwtTokenUtil implements Serializable {
     public Boolean validateRefreshToken(String token) {
         return !isTokenExpired(token);
     }
+
+    public String getSecretKey() {
+        return SECRET_KEY;
+    }
 }

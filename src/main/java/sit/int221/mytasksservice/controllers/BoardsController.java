@@ -23,8 +23,8 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = {"http://localhost:5173","http://ip23nw3.sit.kmutt.ac.th:3333","http://intproj23.sit.kmutt.ac.th"})
-
 @RequestMapping("/v3")
+
 public class BoardsController {
     @Autowired
     private BoardsService boardsService;
@@ -92,5 +92,6 @@ public class BoardsController {
         BoardUpdateRequestDTO updatedBoard = boardsService.updateBoardVisibility(id, boardUpdateRequestDTO);
         return ResponseEntity.ok(updatedBoard);
     }
+
 
 }

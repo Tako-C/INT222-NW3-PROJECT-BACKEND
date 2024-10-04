@@ -16,7 +16,10 @@ public class Boards {
     @Id
     @Column(name = "board_id")
     private String boardId;
+
+    @Column(name = "users_oid")
     private String oid;
+
     private String board_name;
 
     //    @OneToMany(mappedBy = "boards", cascade = CascadeType.ALL, orphanRemoval = true)

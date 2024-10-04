@@ -1,6 +1,7 @@
 package sit.int221.mytasksservice.controllers;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,9 +22,10 @@ import sit.int221.mytasksservice.services.UsersService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @CrossOrigin(origins = {"http://localhost:5173","http://ip23nw3.sit.kmutt.ac.th:3333","http://intproj23.sit.kmutt.ac.th"})
-//@RequestMapping("")
+// @RequestMapping("")
 
 public class UsersController {
 
@@ -55,6 +57,9 @@ public class UsersController {
         UserDetails userDetails = jwtUserDetailsService.loadUserByUsername(jwtRequestDTO.getUserName());
         String accessToken = jwtTokenUtil.generateToken(userDetails);
         String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails);
+
+        log.debug("s", user);
+        usersService.saveUserToPrimary(user);
 
         jwtResponseDTO responseTokenDTO = new jwtResponseDTO();
         responseTokenDTO.setAccess_token(accessToken);
