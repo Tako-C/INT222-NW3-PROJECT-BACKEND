@@ -34,6 +34,20 @@ public class CollabService {
     private UsersRepository usersRepository;
 
     public List<CollabResponseDTO> getAllCollabs(String boardId) {
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = usersRepository.findByUsername(username);
+
+        boolean isOwner = board.getOid().equals(currentUser.getOid());
+        boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
+        boolean isPublicBoard = board.getVisibility().equals("public");
+
+        if (!isOwner && !isCollaborator && !isPublicBoard) {
+            throw new ForbiddenException("You are not allowed to access the collaborators of this board.");
+        }
+
         List<CollabBoard> collabList = collabBoardRepository.findByBoardsId(boardId);
 
         return collabList.stream()
@@ -42,14 +56,21 @@ public class CollabService {
     }
 
     public CollabResponseDTO getCollabByOid(String boardId, String collabOid) {
-        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(username);
 
         CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
 
-        if (board.getOid().equals(currentUser.getOid()) || (collabBoard.getOid().equals(currentUser.getOid()) && board.getVisibility().equals("public"))) {
+        boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(collabOid, boardId);
+        boolean isOwner = board.getOid().equals(currentUser.getOid());
+        boolean isPublicBoard = board.getVisibility().equals("public");
+        boolean isCurrentUserCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
+
+        if (isCollaborator && (isPublicBoard || isOwner || isCurrentUserCollaborator)) {
             return modelMapper.map(collabBoard, CollabResponseDTO.class);
         } else {
             throw new ForbiddenException("You are not allowed to access this collab.");
@@ -72,12 +93,5 @@ public class CollabService {
         collabBoardRepository.save(collabBoard);
 
         return modelMapper.map(collabBoard, CollabResponseDTO.class);
-    }
-
-    private boolean isAuthorizedAccess(Boards board, Users currentUser, String collabOid) {
-        boolean isOwner = board.getOid().equals(currentUser.getOid());
-        boolean isCollaborator = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, board.getBoardId()).isPresent();
-        boolean isPublic = board.getVisibility().equals("public");
-        return isOwner || isCollaborator || isPublic;
     }
 }

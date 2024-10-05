@@ -36,4 +36,5 @@ public class Boards {
 
     @Column(insertable = false, updatable = false)
     private Timestamp updatedOn;
+
 }

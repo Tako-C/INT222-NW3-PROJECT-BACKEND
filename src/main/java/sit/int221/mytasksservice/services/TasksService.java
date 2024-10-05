@@ -36,6 +36,9 @@ public class TasksService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private CollabBoardRepository collabBoardRepository;
+
 //    public List<TaskTableResponseDTO> getAllTasksByBoardId(String boardsId) {
 //        List<Tasks> tasks = tasksRepository.findByBoardsBoardId(boardsId);
 //
@@ -49,25 +52,24 @@ public class TasksService {
 
     //============================== Get TaskAll(Filter&Sort) ==========================================================
     public List<TaskTableResponseDTO> getAllTasksByBoardId(String boardId, String sortBy, List<String> filterStatuses) {
-        // ดึงบอร์ดตาม boardId
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = null;
 
-        // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
         }
 
-        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
-        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
-            // Determine the sort order
+        boolean isOwner = currentUser != null && board.getOid().equals(currentUser.getOid());
+        boolean isCollaborator = currentUser != null && collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
+        boolean isPublicBoard = board.getVisibility().equals("public");
+
+        if (isOwner || isCollaborator || isPublicBoard) {
             Sort sort = Sort.by(Sort.Direction.ASC, sortBy != null ? sortBy : "createdOn");
             List<Tasks> tasks = tasksRepository.findByBoardsBoardId(boardId, sort);
 
-            // If filterStatuses is empty, return all tasks
             if (filterStatuses == null || filterStatuses.isEmpty()) {
                 return tasks.stream().map(task -> {
                     TaskTableResponseDTO taskDTO = modelMapper.map(task, TaskTableResponseDTO.class);
@@ -77,10 +79,9 @@ public class TasksService {
                 }).collect(Collectors.toList());
             }
 
-            // Filter tasks by statuses if filterStatuses is provided
             List<Tasks> filteredTasks = tasks.stream()
                     .filter(task -> filterStatuses.contains(task.getStatus().getName()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             return filteredTasks.stream().map(task -> {
                 TaskTableResponseDTO taskDTO = modelMapper.map(task, TaskTableResponseDTO.class);
@@ -89,7 +90,6 @@ public class TasksService {
                 return taskDTO;
             }).collect(Collectors.toList());
         } else {
-            // ถ้าไม่สามารถเข้าถึงได้ ให้โยนข้อผิดพลาด
             throw new ForbiddenException("Access Denied");
         }
     }
@@ -98,32 +98,30 @@ public class TasksService {
 
     //============================== Get Task ==========================================================================
     public TaskDetailResponseDTO getTaskByBoardIdAndByTaskID(String boardId, Integer tasksId) {
-        // ดึงบอร์ดตาม boardId
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = null;
 
-        // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
         }
 
-        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
-        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
-            // ถ้าผู้ใช้เป็นเจ้าของบอร์ดหรือบอร์ดเป็น public ให้เข้าถึง task ได้
+        boolean isOwner = currentUser != null && board.getOid().equals(currentUser.getOid());
+        boolean isCollaborator = currentUser != null && collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
+        boolean isPublicBoard = board.getVisibility().equals("public");
+
+        if (isOwner || isCollaborator || isPublicBoard) {
             Tasks task = tasksRepository.findByIdAndBoardsBoardId(tasksId, boardId)
                     .orElseThrow(() -> new ItemNotFoundException("Task not found in the specified Board"));
 
-            // สร้าง DTO สำหรับ task
             TaskDetailResponseDTO taskDTO = modelMapper.map(task, TaskDetailResponseDTO.class);
             taskDTO.setStatusName(task.getStatus().getName());
             taskDTO.setBoardName(task.getBoards().getBoard_name());
 
             return taskDTO;
         } else {
-            // ถ้าไม่สามารถเข้าถึงได้ ให้โยนข้อผิดพลาด
             throw new ForbiddenException("Access Denied");
         }
     }
@@ -233,20 +231,17 @@ public class TasksService {
         Users currentUser =  null;
 
         if (!username.equals("anonymousUser")) {
-            // ถ้าผู้ใช้ล็อกอิน ให้ดึงข้อมูลผู้ใช้
             currentUser = usersRepository.findByUsername(username);
 
-            // ตรวจสอบว่าผู้ใช้เป็นเจ้าของบอร์ดหรือไม่
             if (!board.getOid().equals(currentUser.getOid())) {
                 throw new ForbiddenException("Access Denied");
             }
         } else {
-            // ถ้าเป็น anonymousUser และบอร์ดเป็น private ให้ป้องกันการเข้าถึง
             if (board.getVisibility().equals("private")) {
                 throw new ForbiddenException("Access Denied");
             }
         }
 
-        return currentUser; // คืนค่าผู้ใช้ที่ล็อกอิน
+        return currentUser;
     }
 }

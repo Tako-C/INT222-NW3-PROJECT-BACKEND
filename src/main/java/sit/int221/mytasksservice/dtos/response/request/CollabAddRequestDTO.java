@@ -13,6 +13,6 @@ public class CollabAddRequestDTO {
     private String email;
 
     @NotBlank
-    @Pattern(regexp = "^(read|write)$", message = "Visibility must be 'read' or 'write'")
+    @Pattern(regexp = "^(read|write)$", message = "Access right must be 'read' or 'write'")
     private String accessRight;
 }

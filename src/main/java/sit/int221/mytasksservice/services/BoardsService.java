@@ -11,9 +11,10 @@ import sit.int221.mytasksservice.dtos.response.response.*;
 import sit.int221.mytasksservice.models.primary.Boards;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
+import sit.int221.mytasksservice.repositories.primary.CollabBoardRepository;
 import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,31 +29,63 @@ public class BoardsService {
     @Autowired
     private UsersRepository usersRepository;
 
-    public List<BoardsResponseDTO> getAllBoards() {
+    @Autowired
+    private CollabBoardRepository collabBoardRepository;
+
+    public Map<String, List<BoardsResponseDTO>> getAllBoards() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<Boards> boardsList;
+        Set<Boards> boardsSet = new HashSet<>();
+        List<BoardsResponseDTO> collaborativeBoards = new ArrayList<>();
 
         if (username.equals("anonymousUser")) {
-            boardsList = boardsRepository.findPublicBoards();
+            boardsSet.addAll(boardsRepository.findPublicBoards());
         } else {
             Users users = usersRepository.findByUsername(username);
-            boardsList = boardsRepository.findByOidOrVisibility(users.getOid());
+            boardsSet.addAll(boardsRepository.findByOidOrVisibility(users.getOid()));
+
+            List<String> collabBoardIds = collabBoardRepository.findBoardsIdByOid(users.getOid());
+            if (!collabBoardIds.isEmpty()) {
+                List<Boards> collabBoards = boardsRepository.findByBoardIdIn(collabBoardIds);
+                collaborativeBoards = collabBoards.stream()
+                        .map(board -> {
+                            BoardsResponseDTO dto = modelMapper.map(board, BoardsResponseDTO.class);
+                            dto.setOwner(getOwnerByOid(board.getOid()));
+                            return dto;
+                        })
+                        .collect(Collectors.toList());
+            }
         }
 
-        return boardsList.stream().map(board -> {
-            BoardsResponseDTO dto = modelMapper.map(board, BoardsResponseDTO.class);
-            dto.setOwner(getOwnerByOid(board.getOid()));
-            return dto;
-        }).collect(Collectors.toList());
+        List<BoardsResponseDTO> personalBoards = boardsSet.stream()
+                .map(board -> {
+                    BoardsResponseDTO dto = modelMapper.map(board, BoardsResponseDTO.class);
+                    dto.setOwner(getOwnerByOid(board.getOid()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        List<String> collabBoardIdsToRemove = collaborativeBoards.stream()
+                .map(BoardsResponseDTO::getBoardId)
+                .toList();
+
+        personalBoards.removeIf(dto -> collabBoardIdsToRemove.contains(dto.getBoardId()));
+
+        Map<String, List<BoardsResponseDTO>> response = new HashMap<>();
+        response.put("boards", personalBoards);
+        response.put("collaborate", collaborativeBoards);
+
+        return response;
     }
 
-    public Boards createBoards(BoardsAddRequestDTO boardsAddRequestDTO){
+    public Boards createBoards(BoardsAddRequestDTO boardsAddRequestDTO) {
         Boards boards = modelMapper.map(boardsAddRequestDTO, Boards.class);
         return boardsRepository.save(boards);
     }
 
     public BoardDetailResponseDTO getBoardById(String id) {
-        Boards board = boardsRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        Boards board = boardsRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = null;
 
@@ -60,11 +93,7 @@ public class BoardsService {
             currentUser = usersRepository.findByUsername(username);
         }
 
-        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
-            return mapBoardDetails(board);
-        } else {
-            throw new ForbiddenException("Access Denied");
-        }
+        return mapBoardDetails(board, currentUser);
     }
 
     public BoardUpdateRequestDTO updateBoardVisibility(String id, BoardUpdateRequestDTO boardupdateRequestDTO) {
@@ -102,22 +131,31 @@ public class BoardsService {
         return null;
     }
 
-    private BoardDetailResponseDTO mapBoardDetails(Boards board) {
-        BoardDetailResponseDTO dto = modelMapper.map(board, BoardDetailResponseDTO.class);
-        dto.setOwner(getOwnerByOid(board.getOid()));
+    private BoardDetailResponseDTO mapBoardDetails(Boards board, Users currentUser) {
+        String currentUserOid = (currentUser != null) ? currentUser.getOid() : null;
 
-        dto.setTasks(board.getTasks().stream()
-                .map(task -> {
-                    TaskTableResponseDTO taskDTO = modelMapper.map(task, TaskTableResponseDTO.class);
-                    taskDTO.setBoardName(board.getBoard_name());
-                    return taskDTO;
-                })
-                .collect(Collectors.toList()));
+        if ((currentUserOid != null && board.getOid().equals(currentUserOid))
+                || (currentUserOid != null && collabBoardRepository.existsByOidAndBoardsId(currentUserOid, board.getBoardId()))  // ผู้ใช้เป็น collaborator
+                || board.getVisibility().equals("public")) {
 
-        dto.setStatuses(board.getStatuses().stream()
-                .map(status -> modelMapper.map(status, StatusTableResponseDTO.class))
-                .collect(Collectors.toList()));
+            BoardDetailResponseDTO dto = modelMapper.map(board, BoardDetailResponseDTO.class);
+            dto.setOwner(getOwnerByOid(board.getOid()));
 
-        return dto;
+            dto.setTasks(board.getTasks().stream()
+                    .map(task -> {
+                        TaskTableResponseDTO taskDTO = modelMapper.map(task, TaskTableResponseDTO.class);
+                        taskDTO.setBoardName(board.getBoard_name());
+                        return taskDTO;
+                    })
+                    .collect(Collectors.toList()));
+
+            dto.setStatuses(board.getStatuses().stream()
+                    .map(status -> modelMapper.map(status, StatusTableResponseDTO.class))
+                    .collect(Collectors.toList()));
+
+            return dto;
+        } else {
+            throw new ForbiddenException("Access Denied");
+        }
     }
 }

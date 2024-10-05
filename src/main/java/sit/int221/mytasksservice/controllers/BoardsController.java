@@ -19,6 +19,7 @@ import sit.int221.mytasksservice.services.StatusesService;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -39,7 +40,7 @@ public class BoardsController {
     private JwtTokenUtil jwtTokenUtil;
 
     @GetMapping("/boards")
-    public List<BoardsResponseDTO> getAllBoards(){
+    public Map<String, List<BoardsResponseDTO>> getAllBoards(){
         return boardsService.getAllBoards();
     }
 

@@ -13,17 +13,11 @@ import sit.int221.mytasksservice.services.CollabService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/boards/{boardId}")
+@RequestMapping("v3/boards/{boardId}")
 public class CollabController {
 
     @Autowired
-    private CollabBoardRepository collabBoardRepository;
-
-    @Autowired
     private CollabService collabService;
-
-    @Autowired
-    private ModelMapper modelMapper;
 
     @GetMapping("/collabs")
     public List<CollabResponseDTO> getAllCollabs(@PathVariable String boardId) {

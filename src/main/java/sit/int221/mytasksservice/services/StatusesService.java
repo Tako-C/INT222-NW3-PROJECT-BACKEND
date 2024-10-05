@@ -12,6 +12,7 @@ import sit.int221.mytasksservice.dtos.response.response.*;
 import sit.int221.mytasksservice.models.primary.*;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
+import sit.int221.mytasksservice.repositories.primary.CollabBoardRepository;
 import sit.int221.mytasksservice.repositories.primary.StatusesRepository;
 import sit.int221.mytasksservice.repositories.primary.TasksRepository;
 import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
@@ -37,57 +38,58 @@ public class StatusesService {
     @Autowired
     private UsersRepository usersRepository;
 
+    @Autowired
+    private CollabBoardRepository collabBoardRepository;
+
 
     public List<StatusTableResponseDTO> getAllStatusesByBoard_id(String boardsId) {
-        // ดึงบอร์ดและตรวจสอบการเข้าถึง
         Boards board = boardsRepository.findById(boardsId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = null;
 
-        // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
         }
 
-        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
-        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
-            // เข้าถึงสถานะในบอร์ดได้
+        boolean isOwner = currentUser != null && board.getOid().equals(currentUser.getOid());
+        boolean isCollaborator = currentUser != null && collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardsId);
+        boolean isPublicBoard = board.getVisibility().equals("public");
+
+        if (isOwner || isCollaborator || isPublicBoard) {
             return board.getStatuses().stream()
                     .sorted(Comparator.comparing(Statuses::getStatusId))
                     .map(status -> modelMapper.map(status, StatusTableResponseDTO.class))
                     .collect(Collectors.toList());
         } else {
-            // ถ้าไม่สามารถเข้าถึงได้ ให้โยนข้อผิดพลาด
             throw new ForbiddenException("Access Denied");
         }
     }
 
 
     public StatusDetailResponseDTO getStatusesByBoard_idAndByStatusID(String boardsId, Integer statusId) {
-        // ดึงบอร์ดและตรวจสอบการเข้าถึง
         Boards board = boardsRepository.findById(boardsId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = null;
 
-        // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
         }
 
-        // ตรวจสอบสิทธิ์การเข้าถึงบอร์ด
-        if ((currentUser != null && board.getOid().equals(currentUser.getOid())) || board.getVisibility().equals("public")) {
-            // เข้าถึงสถานะในบอร์ดได้
+        boolean isOwner = currentUser != null && board.getOid().equals(currentUser.getOid());
+        boolean isCollaborator = currentUser != null && collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardsId);
+        boolean isPublicBoard = board.getVisibility().equals("public");
+
+        if (isOwner || isCollaborator || isPublicBoard) {
             Statuses statuses = statusesRepository.findByStatusIdAndBoardsBoardId(statusId, boardsId)
                     .orElseThrow(() -> new ItemNotFoundException("Status not found in the specified Board"));
 
             StatusDetailResponseDTO statusDetailResponseDTO = modelMapper.map(statuses, StatusDetailResponseDTO.class);
             return statusDetailResponseDTO;
         } else {
-            // ถ้าไม่สามารถเข้าถึงได้ ให้โยนข้อผิดพลาด
             throw new ForbiddenException("Access Denied");
         }
     }
