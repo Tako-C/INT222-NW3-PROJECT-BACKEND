@@ -18,6 +18,7 @@ public class BoardsResponseDTO {
     private Owner owner;
     private String board_name;
     private String visibility;
+    private String accessRight;
     private Timestamp createdOn;
     private Timestamp updatedOn;
 }

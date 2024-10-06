@@ -9,6 +9,7 @@ import sit.int221.mytasksservice.dtos.response.request.BoardUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.*;
 import sit.int221.mytasksservice.models.primary.Boards;
+import sit.int221.mytasksservice.models.primary.CollabBoard;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
 import sit.int221.mytasksservice.repositories.primary.CollabBoardRepository;
@@ -43,7 +44,11 @@ public class BoardsService {
             Users users = usersRepository.findByUsername(username);
             boardsSet.addAll(boardsRepository.findByOidOrVisibility(users.getOid()));
 
-            List<String> collabBoardIds = collabBoardRepository.findBoardsIdByOid(users.getOid());
+            // สร้างตัวแปรเพื่อเก็บ Oid ของผู้ใช้ที่ล็อกอิน
+            String loggedInOid = users.getOid();
+
+            // ตรวจสอบบอร์ดร่วม
+            List<String> collabBoardIds = collabBoardRepository.findBoardsIdByOid(loggedInOid);
             if (!collabBoardIds.isEmpty()) {
                 List<Boards> collabBoards = boardsRepository.findByBoardIdIn(collabBoardIds);
                 collaborativeBoards = collabBoards.stream()
@@ -55,6 +60,13 @@ public class BoardsService {
                             ownerInfo.setOid(board.getOid());
 
                             dto.setOwner(ownerInfo);
+
+                            CollabBoard collabInfo = collabBoardRepository.findAccessRightByBoardsIdAndOid(board.getBoardId(), loggedInOid)
+                                    .orElse(null);
+
+                            if (collabInfo != null) {
+                                dto.setAccessRight(collabInfo.getAccessRight());
+                            }
 
                             return dto;
                         })
@@ -88,6 +100,7 @@ public class BoardsService {
 
         return response;
     }
+
 
 
 

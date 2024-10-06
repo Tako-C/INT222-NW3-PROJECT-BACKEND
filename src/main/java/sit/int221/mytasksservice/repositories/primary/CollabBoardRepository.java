@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
 import sit.int221.mytasksservice.models.primary.CollabBoard;
 
 import java.util.List;
@@ -16,4 +17,7 @@ public interface CollabBoardRepository extends JpaRepository<CollabBoard, Intege
     boolean existsByOidAndBoardsId(String oid, String boardId);
     @Query("SELECT c.boardsId FROM CollabBoard c WHERE c.oid = :oid")
     List<String> findBoardsIdByOid(@Param("oid") String oid);
+    @Query("SELECT c FROM CollabBoard c WHERE c.boardsId = :boardsId AND c.oid = :oid")
+    Optional<CollabBoard> findAccessRightByBoardsIdAndOid(@Param("boardsId") String boardsId, @Param("oid") String oid);
 }
+
