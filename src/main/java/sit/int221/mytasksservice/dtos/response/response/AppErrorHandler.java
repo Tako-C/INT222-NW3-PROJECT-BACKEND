@@ -83,6 +83,17 @@ public class AppErrorHandler extends Throwable {
         return response;
     }
 
+    @ResponseStatus(code = HttpStatus.CONFLICT)
+    @ExceptionHandler(DuplicateItemException.class)
+    public Map<String, Object> handleConflictException(DuplicateItemException ex, HttpServletRequest request) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.CONFLICT.value());
+        response.put("message", ex.getMessage());
+        response.put("instance", request.getRequestURI());
+        return response;
+    }
+
     @Autowired
     private TasksService tasksService;
 

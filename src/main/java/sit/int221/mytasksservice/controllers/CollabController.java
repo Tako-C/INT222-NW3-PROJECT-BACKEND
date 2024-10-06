@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
-import sit.int221.mytasksservice.repositories.primary.CollabBoardRepository;
 import sit.int221.mytasksservice.services.CollabService;
 
 import java.util.List;

@@ -32,7 +32,7 @@ public class BoardsService {
     @Autowired
     private CollabBoardRepository collabBoardRepository;
 
-    public Map<String, List<BoardsResponseDTO>> getAllBoards() {
+    public Map<String, Object> getAllBoards() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Set<Boards> boardsSet = new HashSet<>();
         List<BoardsResponseDTO> collaborativeBoards = new ArrayList<>();
@@ -49,7 +49,13 @@ public class BoardsService {
                 collaborativeBoards = collabBoards.stream()
                         .map(board -> {
                             BoardsResponseDTO dto = modelMapper.map(board, BoardsResponseDTO.class);
-                            dto.setOwner(getOwnerByOid(board.getOid()));
+
+                            Owner ownerInfo = new Owner();
+                            ownerInfo.setName(getOwnerByOid(board.getOid()).getName());
+                            ownerInfo.setOid(board.getOid());
+
+                            dto.setOwner(ownerInfo);
+
                             return dto;
                         })
                         .collect(Collectors.toList());
@@ -59,7 +65,13 @@ public class BoardsService {
         List<BoardsResponseDTO> personalBoards = boardsSet.stream()
                 .map(board -> {
                     BoardsResponseDTO dto = modelMapper.map(board, BoardsResponseDTO.class);
-                    dto.setOwner(getOwnerByOid(board.getOid()));
+
+                    Owner ownerInfo = new Owner();
+                    ownerInfo.setName(getOwnerByOid(board.getOid()).getName());
+                    ownerInfo.setOid(board.getOid());
+
+                    dto.setOwner(ownerInfo);
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -70,12 +82,14 @@ public class BoardsService {
 
         personalBoards.removeIf(dto -> collabBoardIdsToRemove.contains(dto.getBoardId()));
 
-        Map<String, List<BoardsResponseDTO>> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("boards", personalBoards);
         response.put("collaborate", collaborativeBoards);
 
         return response;
     }
+
+
 
     public Boards createBoards(BoardsAddRequestDTO boardsAddRequestDTO) {
         Boards boards = modelMapper.map(boardsAddRequestDTO, Boards.class);

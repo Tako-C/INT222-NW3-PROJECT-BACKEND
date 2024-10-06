@@ -40,7 +40,7 @@ public class BoardsController {
     private JwtTokenUtil jwtTokenUtil;
 
     @GetMapping("/boards")
-    public Map<String, List<BoardsResponseDTO>> getAllBoards(){
+    public Map<String, Object> getAllBoards(){
         return boardsService.getAllBoards();
     }
 

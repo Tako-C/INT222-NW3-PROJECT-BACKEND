@@ -6,6 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
+import sit.int221.mytasksservice.dtos.response.response.DuplicateItemException;
 import sit.int221.mytasksservice.dtos.response.response.ForbiddenException;
 import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
 import sit.int221.mytasksservice.models.primary.Boards;
@@ -80,8 +81,20 @@ public class CollabService {
     public CollabResponseDTO addCollabToBoard(String boardId, CollabAddRequestDTO collabAddRequestDTO) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = usersRepository.findByUsername(username);
+
         Users collaborator = usersRepository.findByEmail(collabAddRequestDTO.getEmail())
                 .orElseThrow(() -> new ItemNotFoundException("User with this email not found"));
+
+        boolean isAlreadyCollab = collabBoardRepository.existsByOidAndBoardsId(collaborator.getOid(), boardId);
+
+        if (collaborator.getOid().equals(board.getOid()) || isAlreadyCollab) {
+            String errorMessage = collaborator.getOid().equals(board.getOid())
+                    ? "The board owner cannot be added as a collaborator."
+                    : "This user is already a collaborator for this board.";
+            throw new DuplicateItemException(errorMessage);
+        }
 
         CollabBoard collabBoard = new CollabBoard();
         collabBoard.setBoardsId(boardId);
