@@ -2,6 +2,8 @@ package sit.int221.mytasksservice.services;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
@@ -38,15 +40,23 @@ public class CollabService {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        boolean isOwner = board.getOid().equals(currentUser.getOid());
-        boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
         boolean isPublicBoard = board.getVisibility().equals("public");
 
-        if (!isOwner && !isCollaborator && !isPublicBoard) {
-            throw new ForbiddenException("You are not allowed to access the collaborators of this board.");
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        if (!"anonymousUser".equals(username)) {
+            Users currentUser = usersRepository.findByUsername(username);
+
+            boolean isOwner = board.getOid().equals(currentUser.getOid());
+            boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
+
+            if (!isOwner && !isCollaborator && !isPublicBoard) {
+                throw new ForbiddenException("You are not allowed to access the collaborators of this board.");
+            }
+        } else {
+            if (!isPublicBoard) {
+                throw new ForbiddenException("You are not allowed to access the collaborators of this board.");
+            }
         }
 
         List<CollabBoard> collabList = collabBoardRepository.findByBoardsId(boardId);
@@ -60,23 +70,32 @@ public class CollabService {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
         CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
 
-        boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(collabOid, boardId);
-        boolean isOwner = board.getOid().equals(currentUser.getOid());
         boolean isPublicBoard = board.getVisibility().equals("public");
-        boolean isCurrentUserCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
 
-        if (isCollaborator && (isPublicBoard || isOwner || isCurrentUserCollaborator)) {
-            return modelMapper.map(collabBoard, CollabResponseDTO.class);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        if (!"anonymousUser".equals(username)) {
+            Users currentUser = usersRepository.findByUsername(username);
+            boolean isOwner = board.getOid().equals(currentUser.getOid());
+            boolean isCurrentUserCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
+
+            if (isOwner || isCurrentUserCollaborator || isPublicBoard) {
+                return modelMapper.map(collabBoard, CollabResponseDTO.class);
+            } else {
+                throw new ForbiddenException("You are not allowed to access this collab.");
+            }
         } else {
-            throw new ForbiddenException("You are not allowed to access this collab.");
+            if (isPublicBoard) {
+                return modelMapper.map(collabBoard, CollabResponseDTO.class);
+            } else {
+                throw new ForbiddenException("You are not allowed to access this collab.");
+            }
         }
     }
+
 
     public CollabResponseDTO addCollabToBoard(String boardId, CollabAddRequestDTO collabAddRequestDTO) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));

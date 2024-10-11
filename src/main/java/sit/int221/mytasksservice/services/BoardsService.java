@@ -44,10 +44,8 @@ public class BoardsService {
             Users users = usersRepository.findByUsername(username);
             boardsSet.addAll(boardsRepository.findByOidOrVisibility(users.getOid()));
 
-            // สร้างตัวแปรเพื่อเก็บ Oid ของผู้ใช้ที่ล็อกอิน
             String loggedInOid = users.getOid();
 
-            // ตรวจสอบบอร์ดร่วม
             List<String> collabBoardIds = collabBoardRepository.findBoardsIdByOid(loggedInOid);
             if (!collabBoardIds.isEmpty()) {
                 List<Boards> collabBoards = boardsRepository.findByBoardIdIn(collabBoardIds);

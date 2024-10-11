@@ -30,6 +30,7 @@ public class UserSecurityConfig {
                         .requestMatchers(HttpMethod.GET,"/v3/boards/{boardId}").permitAll()
                         .requestMatchers(HttpMethod.GET,"/v3/boards/{boardId}/tasks/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/v3/boards/{boardId}/statuses/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/v3/boards/{boardId}/collabs/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(authenticationExceptionHandler))

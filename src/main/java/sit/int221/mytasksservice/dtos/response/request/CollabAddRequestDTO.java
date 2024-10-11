@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class CollabAddRequestDTO {
+    private String collabId;
 
     @NotBlank
     @Pattern(regexp = "^[^@\\s]+@[^@\\s]+\\.(co|th|com)$",
