@@ -58,7 +58,6 @@ public class UsersController {
         String accessToken = jwtTokenUtil.generateToken(userDetails);
         String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails);
 
-        log.debug("s", user);
         usersService.saveUserToPrimary(user);
 
         jwtResponseDTO responseTokenDTO = new jwtResponseDTO();

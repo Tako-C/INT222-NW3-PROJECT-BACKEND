@@ -33,7 +33,7 @@ public class StatusService {
 
     public Status getStatus(Integer id) {
         return repository.findById(id)
-                .orElseThrow(ItemNotFoundException::new);
+                .orElseThrow(() -> new ItemNotFoundException("Status not found"));
     }
 
     public Status createNewStatus(StatusAddRequestDTO statusAddRequestDTO) {

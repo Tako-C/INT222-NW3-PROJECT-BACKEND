@@ -18,7 +18,9 @@ import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
 import sit.int221.mytasksservice.repositories.primary.CollabBoardRepository;
 import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +38,7 @@ public class CollabService {
     @Autowired
     private UsersRepository usersRepository;
 
-    public List<CollabResponseDTO> getAllCollabs(String boardId) {
+    public Map<String, Object> getAllCollabs(String boardId) {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
@@ -61,17 +63,20 @@ public class CollabService {
 
         List<CollabBoard> collabList = collabBoardRepository.findByBoardsId(boardId);
 
-        return collabList.stream()
+        List<CollabResponseDTO> collabResponseDTOList = collabList.stream()
                 .map(collab -> modelMapper.map(collab, CollabResponseDTO.class))
                 .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("collaborators", collabResponseDTOList);
+
+        return response;
     }
+
 
     public CollabResponseDTO getCollabByOid(String boardId, String collabOid) {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
-
-        CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
 
         boolean isPublicBoard = board.getVisibility().equals("public");
 
@@ -83,12 +88,16 @@ public class CollabService {
             boolean isCurrentUserCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
 
             if (isOwner || isCurrentUserCollaborator || isPublicBoard) {
+                CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
                 return modelMapper.map(collabBoard, CollabResponseDTO.class);
             } else {
                 throw new ForbiddenException("You are not allowed to access this collab.");
             }
         } else {
             if (isPublicBoard) {
+                CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
+                        .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
                 return modelMapper.map(collabBoard, CollabResponseDTO.class);
             } else {
                 throw new ForbiddenException("You are not allowed to access this collab.");

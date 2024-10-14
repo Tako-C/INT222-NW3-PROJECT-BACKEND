@@ -3,6 +3,7 @@ package sit.int221.mytasksservice.controllers;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
@@ -10,6 +11,7 @@ import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
 import sit.int221.mytasksservice.services.CollabService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("v3/boards/{boardId}")
@@ -19,8 +21,9 @@ public class CollabController {
     private CollabService collabService;
 
     @GetMapping("/collabs")
-    public List<CollabResponseDTO> getAllCollabs(@PathVariable String boardId) {
-        return collabService.getAllCollabs(boardId);
+    public ResponseEntity<Map<String, Object>> getAllCollabs(@PathVariable String boardId) {
+        Map<String, Object> collabResponse = collabService.getAllCollabs(boardId);
+        return ResponseEntity.ok(collabResponse);
     }
 
     @GetMapping("/collabs/{collab_oid}")
@@ -32,6 +35,6 @@ public class CollabController {
     @PostMapping("/collabs")
     public ResponseEntity<CollabResponseDTO> addCollabToBoard(@PathVariable String boardId, @Valid @RequestBody CollabAddRequestDTO collabAddRequestDTO) {
         CollabResponseDTO newCollab = collabService.addCollabToBoard(boardId, collabAddRequestDTO);
-        return ResponseEntity.ok(newCollab);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newCollab);
     }
 }
