@@ -2,11 +2,10 @@ package sit.int221.mytasksservice.services;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
+import sit.int221.mytasksservice.dtos.response.request.CollabUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.DuplicateItemException;
 import sit.int221.mytasksservice.dtos.response.response.ForbiddenException;
@@ -105,7 +104,6 @@ public class CollabService {
         }
     }
 
-
     public CollabResponseDTO addCollabToBoard(String boardId, CollabAddRequestDTO collabAddRequestDTO) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
@@ -134,5 +132,50 @@ public class CollabService {
         collabBoardRepository.save(collabBoard);
 
         return modelMapper.map(collabBoard, CollabResponseDTO.class);
+    }
+
+    public CollabResponseDTO updateCollabAccessRight(String boardId, String collabOid, CollabUpdateRequestDTO collabUpdateRequestDTO) {
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = usersRepository.findByUsername(username);
+
+        boolean isOwner = board.getOid().equals(currentUser.getOid());
+        if (!isOwner) {
+            throw new ForbiddenException("Only the board owner can update collaborator access rights.");
+        }
+
+        CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
+
+        String newAccessRight = collabUpdateRequestDTO.getAccessRight();
+        collabBoard.setAccessRight(newAccessRight);
+        collabBoardRepository.save(collabBoard);
+
+        return modelMapper.map(collabBoard, CollabResponseDTO.class);
+    }
+
+    public CollabResponseDTO removeCollabFromBoard(String boardId, String collabOid) {
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = usersRepository.findByUsername(username);
+
+        boolean isOwner = board.getOid().equals(currentUser.getOid());
+        boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
+
+        if (isOwner) {
+            collabBoardRepository.delete(collabBoard);
+            return modelMapper.map(collabBoard, CollabResponseDTO.class);
+        } else if (isCollaborator && currentUser.getOid().equals(collabOid)) {
+            collabBoardRepository.delete(collabBoard);
+            return modelMapper.map(collabBoard, CollabResponseDTO.class);
+        } else {
+            throw new ForbiddenException("You are not allowed to remove this collaborator.");
+        }
     }
 }
