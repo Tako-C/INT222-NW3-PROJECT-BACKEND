@@ -19,5 +19,6 @@ public interface CollabBoardRepository extends JpaRepository<CollabBoard, Intege
     List<String> findBoardsIdByOid(@Param("oid") String oid);
     @Query("SELECT c FROM CollabBoard c WHERE c.boardsId = :boardsId AND c.oid = :oid")
     Optional<CollabBoard> findAccessRightByBoardsIdAndOid(@Param("boardsId") String boardsId, @Param("oid") String oid);
+    boolean existsByOidAndBoardsIdAndAccessRight(String oid, String boardsId, String accessRight);
 }
 

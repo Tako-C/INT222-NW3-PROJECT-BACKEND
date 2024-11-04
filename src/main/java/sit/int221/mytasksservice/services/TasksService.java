@@ -146,8 +146,8 @@ public class TasksService {
     }
 
     //======================================= Update Task =============================================================
-    public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO, Integer taskId) {
-        Users currentUser = checkBoardAccess(taskUpdateRequestDTO.getBoards());
+    public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO, Integer taskId, String boardId) {
+        Users currentUser = checkBoardAccess(boardId);
 
         Tasks task = tasksRepository.findById(taskId)
                 .orElseThrow(() -> new ItemNotFoundException("Not existing task"));
@@ -171,9 +171,6 @@ public class TasksService {
 
         return tasksRepository.save(task);
     }
-
-
-
 
     //======================================= Delete Task =============================================================
 
@@ -233,7 +230,10 @@ public class TasksService {
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
 
-            if (!board.getOid().equals(currentUser.getOid())) {
+            boolean isOwner = board.getOid().equals(currentUser.getOid());
+            boolean isCollaboratorWithWriteAccess = collabBoardRepository.existsByOidAndBoardsIdAndAccessRight(currentUser.getOid(), boardId, "write");
+
+            if (!isOwner && !isCollaboratorWithWriteAccess) {
                 throw new ForbiddenException("Access Denied");
             }
         } else {

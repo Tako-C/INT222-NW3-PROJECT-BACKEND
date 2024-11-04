@@ -74,7 +74,7 @@ public class TasksController {
         taskUpdateRequestDTO.setAssignees(taskAddRequestDTO.getAssignees());
         taskUpdateRequestDTO.setBoards(taskAddRequestDTO.getBoards());
         taskUpdateRequestDTO.setStatus(taskAddRequestDTO.getStatus());
-        tasksService.updateTask(taskUpdateRequestDTO,taskId);
+        tasksService.updateTask(taskUpdateRequestDTO,taskId, boardId);
         return ResponseEntity.ok().body(taskUpdateRequestDTO);
     }
 
