@@ -149,7 +149,7 @@ public class TasksService {
     public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO, Integer taskId, String boardId) {
         Users currentUser = checkBoardAccess(boardId);
 
-        Tasks task = tasksRepository.findById(taskId)
+        Tasks task = tasksRepository.findByIdAndBoardsBoardId(taskId, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Not existing task"));
 
         Boards boards = boardsRepository.findById(taskUpdateRequestDTO.getBoards())
@@ -241,7 +241,6 @@ public class TasksService {
                 throw new ForbiddenException("Access Denied");
             }
         }
-
         return currentUser;
     }
 }

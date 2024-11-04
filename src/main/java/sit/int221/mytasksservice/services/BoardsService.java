@@ -122,6 +122,7 @@ public class BoardsService {
     }
 
     public BoardUpdateRequestDTO updateBoardVisibility(String id, BoardUpdateRequestDTO boardupdateRequestDTO) {
+
         Boards board = boardsRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Board not found"));
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(username);

@@ -111,7 +111,7 @@ public class AppErrorHandler {
 
         if (boardId != null) {
             try {
-                tasksService.checkBoardAccess(boardId);
+                tasksService.checkBoardAccess(boardId); // ตรวจสอบการเข้าถึงบอร์ด
             } catch (ItemNotFoundException e) {
                 Map<String, Object> errors = new LinkedHashMap<>();
                 errors.put("timestamp", LocalDateTime.now());
@@ -126,20 +126,48 @@ public class AppErrorHandler {
                 return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
             }
         }
-        Map<String, Object> errors = new LinkedHashMap<>();
-        errors.put("timestamp", LocalDateTime.now());
-        errors.put("status", HttpStatus.BAD_REQUEST.value());
-        errors.put("message", "Invalid or missing request body");
 
         if (ex instanceof MethodArgumentNotValidException) {
             MethodArgumentNotValidException validationEx = (MethodArgumentNotValidException) ex;
+            Map<String, Object> errors = new LinkedHashMap<>();
+            errors.put("timestamp", LocalDateTime.now());
+            errors.put("status", HttpStatus.BAD_REQUEST.value());
+            errors.put("message", "Invalid request body");
             List<String> validationErrors = validationEx.getBindingResult().getAllErrors().stream()
                     .map(error -> ((MessageSourceResolvable) error).getDefaultMessage())
                     .collect(Collectors.toList());
             errors.put("errors", validationErrors);
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
         }
+
+        if (ex instanceof HttpMessageNotReadableException) {
+            String httpMethod = request.getMethod();
+            Map<String, Object> errors = new LinkedHashMap<>();
+            errors.put("timestamp", LocalDateTime.now());
+
+            if ("POST".equalsIgnoreCase(httpMethod)) {
+                errors.put("status", HttpStatus.BAD_REQUEST.value());
+                errors.put("message", "Invalid or missing request body");
+                return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+            } if ("PUT".equalsIgnoreCase(httpMethod)) {
+                errors.put("status", HttpStatus.NOT_FOUND.value());
+                errors.put("message", "Invalid or missing request body");
+                return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
+            } else {
+                errors.put("status", HttpStatus.FORBIDDEN.value());
+                errors.put("message", "Access Denied: Invalid or missing request body");
+                return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+            }
+        }
+
+        Map<String, Object> errors = new LinkedHashMap<>();
+        errors.put("timestamp", LocalDateTime.now());
+        errors.put("status", HttpStatus.BAD_REQUEST.value());
+        errors.put("message", "Invalid or missing request body");
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
+
+
 
     private String extractBoardIdFromUri(String uri) {
         String[] segments = uri.split("/");

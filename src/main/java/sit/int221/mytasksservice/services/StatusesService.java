@@ -195,20 +195,24 @@ public class StatusesService {
 //        }
 //    }
 
-    private Users checkBoardAccess(String boardId) {
+    public Users checkBoardAccess(String boardId) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser =  null;
 
         if (!username.equals("anonymousUser")) {
             currentUser = usersRepository.findByUsername(username);
-            if (!board.getOid().equals(currentUser.getOid())) {
+
+            boolean isOwner = board.getOid().equals(currentUser.getOid());
+            boolean isCollaboratorWithWriteAccess = collabBoardRepository.existsByOidAndBoardsIdAndAccessRight(currentUser.getOid(), boardId, "write");
+
+            if (!isOwner && !isCollaboratorWithWriteAccess) {
                 throw new ForbiddenException("Access Denied");
             }
-        }
-
-        if (currentUser == null && board.getVisibility().equals("private")) {
-            throw new ForbiddenException("Access Denied");
+        } else {
+            if (board.getVisibility().equals("private")) {
+                throw new ForbiddenException("Access Denied");
+            }
         }
         return currentUser;
     }
