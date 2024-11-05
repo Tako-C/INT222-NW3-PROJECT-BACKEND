@@ -105,7 +105,8 @@ public class CollabService {
     }
 
     public CollabResponseDTO addCollabToBoard(String boardId, CollabAddRequestDTO collabAddRequestDTO) {
-        Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(username);
@@ -115,11 +116,13 @@ public class CollabService {
 
         boolean isAlreadyCollab = collabBoardRepository.existsByOidAndBoardsId(collaborator.getOid(), boardId);
 
-        if (collaborator.getOid().equals(board.getOid()) || isAlreadyCollab) {
-            String errorMessage = collaborator.getOid().equals(board.getOid())
-                    ? "The board owner cannot be added as a collaborator."
-                    : "This user is already a collaborator for this board.";
-            throw new DuplicateItemException(errorMessage);
+        // ตรวจสอบหาก collaborator คือเจ้าของบอร์ดหรือผู้ที่มีอยู่แล้ว
+        if (collaborator.getOid().equals(board.getOid())) {
+            throw new DuplicateItemException("The board owner cannot be added as a collaborator.");
+        }
+
+        if (isAlreadyCollab) {
+            throw new DuplicateItemException("This user is already a collaborator for this board.");
         }
 
         CollabBoard collabBoard = new CollabBoard();
@@ -133,6 +136,7 @@ public class CollabService {
 
         return modelMapper.map(collabBoard, CollabResponseDTO.class);
     }
+
 
     public CollabResponseDTO updateCollabAccessRight(String boardId, String collabOid, CollabUpdateRequestDTO collabUpdateRequestDTO) {
         Boards board = boardsRepository.findById(boardId)
@@ -159,23 +163,21 @@ public class CollabService {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
-
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUser = usersRepository.findByUsername(username);
 
         boolean isOwner = board.getOid().equals(currentUser.getOid());
         boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
 
-        if (isOwner) {
-            collabBoardRepository.delete(collabBoard);
-            return modelMapper.map(collabBoard, CollabResponseDTO.class);
-        } else if (isCollaborator && currentUser.getOid().equals(collabOid)) {
-            collabBoardRepository.delete(collabBoard);
-            return modelMapper.map(collabBoard, CollabResponseDTO.class);
-        } else {
+        if (!isOwner && !(isCollaborator && currentUser.getOid().equals(collabOid))) {
             throw new ForbiddenException("You are not allowed to remove this collaborator.");
         }
+
+        CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
+
+        collabBoardRepository.delete(collabBoard);
+        return modelMapper.map(collabBoard, CollabResponseDTO.class);
     }
+
 }

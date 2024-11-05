@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = {"http://localhost:5173","http://ip23nw3.sit.kmutt.ac.th:3333","http://intproj23.sit.kmutt.ac.th"})
 @RequestMapping("v3/boards/{boardId}")
 public class CollabController {
 

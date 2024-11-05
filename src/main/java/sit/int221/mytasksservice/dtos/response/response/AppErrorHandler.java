@@ -101,9 +101,6 @@ public class AppErrorHandler {
     @Autowired
     private TasksService tasksService;
 
-    @Autowired
-    private CollabService collabService;
-
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class})
     public ResponseEntity<Object> handleValidationExceptions(Exception ex, HttpServletRequest request) {
         String uri = request.getRequestURI();
@@ -133,6 +130,19 @@ public class AppErrorHandler {
             errors.put("timestamp", LocalDateTime.now());
             errors.put("status", HttpStatus.BAD_REQUEST.value());
             errors.put("message", "Invalid request body");
+
+            String httpMethod = request.getMethod();
+            if ("POST".equalsIgnoreCase(httpMethod)) {
+                errors.put("status", HttpStatus.FORBIDDEN.value());
+                errors.put("message", "Request body cannot be null or empty for POST requests");
+                return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+            }
+
+            if (validationEx.getBindingResult().getAllErrors().isEmpty()) {
+                errors.put("message", "Request body cannot be null or empty");
+                return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+            }
+
             List<String> validationErrors = validationEx.getBindingResult().getAllErrors().stream()
                     .map(error -> ((MessageSourceResolvable) error).getDefaultMessage())
                     .collect(Collectors.toList());
@@ -149,7 +159,7 @@ public class AppErrorHandler {
                 errors.put("status", HttpStatus.BAD_REQUEST.value());
                 errors.put("message", "Invalid or missing request body");
                 return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-            } if ("PUT".equalsIgnoreCase(httpMethod)) {
+            } else if ("PUT".equalsIgnoreCase(httpMethod)) {
                 errors.put("status", HttpStatus.NOT_FOUND.value());
                 errors.put("message", "Invalid or missing request body");
                 return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
@@ -159,15 +169,12 @@ public class AppErrorHandler {
                 return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
             }
         }
-
         Map<String, Object> errors = new LinkedHashMap<>();
         errors.put("timestamp", LocalDateTime.now());
         errors.put("status", HttpStatus.BAD_REQUEST.value());
         errors.put("message", "Invalid or missing request body");
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
-
-
 
     private String extractBoardIdFromUri(String uri) {
         String[] segments = uri.split("/");
