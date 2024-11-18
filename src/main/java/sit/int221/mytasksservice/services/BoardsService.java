@@ -41,7 +41,7 @@ public class BoardsService {
         if (username.equals("anonymousUser")) {
             boardsSet.addAll(boardsRepository.findPublicBoards());
         } else {
-            Users users = usersRepository.findByUsername(username);
+            Users users = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));;
             boardsSet.addAll(boardsRepository.findByOidOrVisibility(users.getOid()));
 
             String loggedInOid = users.getOid();
@@ -115,7 +115,7 @@ public class BoardsService {
         Users currentUser = null;
 
         if (!username.equals("anonymousUser")) {
-            currentUser = usersRepository.findByUsername(username);
+            currentUser = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));
         }
 
         return mapBoardDetails(board, currentUser);
@@ -125,7 +125,7 @@ public class BoardsService {
 
         Boards board = boardsRepository.findById(id).orElseThrow(() -> new ItemNotFoundException("Board not found"));
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
+        Users currentUser = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));
 
         if (!board.getOid().equals(currentUser.getOid())) {
             throw new ForbiddenException("Access Denied");

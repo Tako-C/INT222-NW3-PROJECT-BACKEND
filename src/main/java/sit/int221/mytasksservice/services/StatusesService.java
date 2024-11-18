@@ -50,7 +50,7 @@ public class StatusesService {
         Users currentUser = null;
 
         if (!username.equals("anonymousUser")) {
-            currentUser = usersRepository.findByUsername(username);
+            currentUser = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));
         }
 
         boolean isOwner = currentUser != null && board.getOid().equals(currentUser.getOid());
@@ -76,7 +76,7 @@ public class StatusesService {
         Users currentUser = null;
 
         if (!username.equals("anonymousUser")) {
-            currentUser = usersRepository.findByUsername(username);
+            currentUser = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));
         }
 
         boolean isOwner = currentUser != null && board.getOid().equals(currentUser.getOid());
@@ -201,7 +201,7 @@ public class StatusesService {
         Users currentUser =  null;
 
         if (!username.equals("anonymousUser")) {
-            currentUser = usersRepository.findByUsername(username);
+            currentUser = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));
 
             boolean isOwner = board.getOid().equals(currentUser.getOid());
             boolean isCollaboratorWithWriteAccess = collabBoardRepository.existsByOidAndBoardsIdAndAccessRight(currentUser.getOid(), boardId, "write");

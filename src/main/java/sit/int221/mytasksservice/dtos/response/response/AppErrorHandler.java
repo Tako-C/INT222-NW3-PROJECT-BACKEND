@@ -98,6 +98,17 @@ public class AppErrorHandler {
         return response;
     }
 
+    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(EmailSendingException.class)
+    public Map<String, Object> handleEmailSendingException(EmailSendingException ex, HttpServletRequest request) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        response.put("message", ex.getMessage());
+        response.put("instance", request.getRequestURI());
+        return response;
+    }
+
     @Autowired
     private TasksService tasksService;
 

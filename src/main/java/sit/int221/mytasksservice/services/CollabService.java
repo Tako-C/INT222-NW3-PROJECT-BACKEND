@@ -1,26 +1,25 @@
 package sit.int221.mytasksservice.services;
 
+import jakarta.mail.MessagingException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
-import sit.int221.mytasksservice.dtos.response.request.CollabUpdateRequestDTO;
-import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
-import sit.int221.mytasksservice.dtos.response.response.DuplicateItemException;
-import sit.int221.mytasksservice.dtos.response.response.ForbiddenException;
-import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
-import sit.int221.mytasksservice.models.primary.Boards;
-import sit.int221.mytasksservice.models.primary.CollabBoard;
+import org.springframework.transaction.annotation.Transactional;
+
+import sit.int221.mytasksservice.dtos.response.request.InvitationRequestDTO;
+import sit.int221.mytasksservice.dtos.response.response.*;
+import sit.int221.mytasksservice.models.primary.*;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.BoardsRepository;
 import sit.int221.mytasksservice.repositories.primary.CollabBoardRepository;
 import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
+import java.io.UnsupportedEncodingException;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class CollabService {
@@ -29,155 +28,156 @@ public class CollabService {
     private CollabBoardRepository collabBoardRepository;
 
     @Autowired
-    private ModelMapper modelMapper;
-
-    @Autowired
     private BoardsRepository boardsRepository;
 
     @Autowired
     private UsersRepository usersRepository;
 
-    public Map<String, Object> getAllCollabs(String boardId) {
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
+    @Transactional
+    public void sendInvitation(String boardId, InvitationRequestDTO invitationRequestDTO, String inviterUsername) {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
-        boolean isPublicBoard = board.getVisibility().equals("public");
+        Users inviter = usersRepository.findByUsername(inviterUsername)
+                .orElseThrow(() -> new ItemNotFoundException("Inviter not found"));
 
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users invitee = usersRepository.findByEmail(invitationRequestDTO.getInviteeEmail())
+                .orElseThrow(() -> new ItemNotFoundException("Invitee not found"));
 
-        if (!"anonymousUser".equals(username)) {
-            Users currentUser = usersRepository.findByUsername(username);
-
-            boolean isOwner = board.getOid().equals(currentUser.getOid());
-            boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
-
-            if (!isOwner && !isCollaborator && !isPublicBoard) {
-                throw new ForbiddenException("You are not allowed to access the collaborators of this board.");
-            }
-        } else {
-            if (!isPublicBoard) {
-                throw new ForbiddenException("You are not allowed to access the collaborators of this board.");
-            }
+        if (!board.getOid().equals(inviter.getOid()) &&
+                !collabBoardRepository.existsByOidAndBoardsIdAndStatusInvite(inviter.getOid(), boardId, InviteStatus.ACCEPTED)) {
+            throw new ForbiddenException("Only the board owner or accepted collaborators can send invitations.");
         }
 
-        List<CollabBoard> collabList = collabBoardRepository.findByBoardsId(boardId);
+        boolean existsPending = collabBoardRepository.existsByOidAndBoardsIdAndStatusInvite(
+                invitee.getOid(),
+                boardId,
+                InviteStatus.PENDING
+        );
 
-        List<CollabResponseDTO> collabResponseDTOList = collabList.stream()
-                .map(collab -> modelMapper.map(collab, CollabResponseDTO.class))
-                .collect(Collectors.toList());
+        boolean isAlreadyCollaborator = collabBoardRepository.existsByOidAndBoardsIdAndStatusInvite(
+                invitee.getOid(),
+                boardId,
+                InviteStatus.ACCEPTED
+        );
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("collaborators", collabResponseDTOList);
-
-        return response;
-    }
-
-
-    public CollabResponseDTO getCollabByOid(String boardId, String collabOid) {
-        Boards board = boardsRepository.findById(boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
-
-        boolean isPublicBoard = board.getVisibility().equals("public");
-
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        if (!"anonymousUser".equals(username)) {
-            Users currentUser = usersRepository.findByUsername(username);
-            boolean isOwner = board.getOid().equals(currentUser.getOid());
-            boolean isCurrentUserCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
-
-            if (isOwner || isCurrentUserCollaborator || isPublicBoard) {
-                CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
-                        .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
-                return modelMapper.map(collabBoard, CollabResponseDTO.class);
-            } else {
-                throw new ForbiddenException("You are not allowed to access this collab.");
-            }
-        } else {
-            if (isPublicBoard) {
-                CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
-                        .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
-                return modelMapper.map(collabBoard, CollabResponseDTO.class);
-            } else {
-                throw new ForbiddenException("You are not allowed to access this collab.");
-            }
+        if (existsPending || isAlreadyCollaborator) {
+            throw new DuplicateItemException("The user is already a collaborator or pending collaborator of this board");
         }
-    }
 
-    public CollabResponseDTO addCollabToBoard(String boardId, CollabAddRequestDTO collabAddRequestDTO) {
-        Boards board = boardsRepository.findById(boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
-
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        Users collaborator = usersRepository.findByEmail(collabAddRequestDTO.getEmail())
-                .orElseThrow(() -> new ItemNotFoundException("User with this email not found"));
-
-        boolean isAlreadyCollab = collabBoardRepository.existsByOidAndBoardsId(collaborator.getOid(), boardId);
-
-        // ตรวจสอบหาก collaborator คือเจ้าของบอร์ดหรือผู้ที่มีอยู่แล้ว
-        if (collaborator.getOid().equals(board.getOid())) {
+        if (invitee.getOid().equals(board.getOid())) {
             throw new DuplicateItemException("The board owner cannot be added as a collaborator.");
         }
 
-        if (isAlreadyCollab) {
-            throw new DuplicateItemException("This user is already a collaborator for this board.");
+        CollabBoard invitation = new CollabBoard();
+        invitation.setOid(invitee.getOid());
+        invitation.setName(invitee.getName());
+        invitation.setEmail(invitee.getEmail());
+        invitation.setAccessRight(invitationRequestDTO.getAccessRight());
+        invitation.setBoardsId(boardId);
+        invitation.setStatusInvite(InviteStatus.PENDING);
+        invitation.setToken(UUID.randomUUID().toString());
+
+        collabBoardRepository.save(invitation);
+
+        // emailsender here
+        try {
+            emailService.sendInvitationEmailWithReplyTo(inviter, invitee, board, invitation.getAccessRight(), invitation.getToken());
+        } catch (MessagingException e) {
+            throw new EmailSendingException(String.format(
+                    "We could not send e-mail to %s, he/she can accept the invitation at %s/board/%s/collab/invitations/accept?token=%s or decline at %s/board/%s/collab/invitations/decline?token=%s",
+                    invitee.getName(),
+                    getFrontendUrl(),
+                    board.getBoardId(),
+                    invitation.getToken(),
+                    getFrontendUrl(),
+                    board.getBoardId(),
+                    invitation.getToken()
+            ));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
-
-        CollabBoard collabBoard = new CollabBoard();
-        collabBoard.setBoardsId(boardId);
-        collabBoard.setOid(collaborator.getOid());
-        collabBoard.setEmail(collaborator.getEmail());
-        collabBoard.setName(collaborator.getName());
-        collabBoard.setAccessRight(collabAddRequestDTO.getAccessRight());
-
-        collabBoardRepository.save(collabBoard);
-
-        return modelMapper.map(collabBoard, CollabResponseDTO.class);
     }
 
+    @Transactional
+    public void acceptInvitation(String token, String inviteeUsername) {
+        Optional<CollabBoard> optionalInvitation = collabBoardRepository.findByToken(token);
 
-    public CollabResponseDTO updateCollabAccessRight(String boardId, String collabOid, CollabUpdateRequestDTO collabUpdateRequestDTO) {
-        Boards board = boardsRepository.findById(boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        boolean isOwner = board.getOid().equals(currentUser.getOid());
-        if (!isOwner) {
-            throw new ForbiddenException("Only the board owner can update collaborator access rights.");
+        if (!optionalInvitation.isPresent()) {
+            throw new ItemNotFoundException("Invitation not found");
         }
 
-        CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
+        CollabBoard invitation = optionalInvitation.get();
 
-        String newAccessRight = collabUpdateRequestDTO.getAccessRight();
-        collabBoard.setAccessRight(newAccessRight);
-        collabBoardRepository.save(collabBoard);
+        Users invitee = usersRepository.findByUsername(inviteeUsername)
+                .orElseThrow(() -> new ItemNotFoundException("Invitee not found"));
 
-        return modelMapper.map(collabBoard, CollabResponseDTO.class);
+//        if (!invitation.getOid().equals(invitee.getOid())) {
+//            throw new ForbiddenException("You are not authorized to accept this invitation");
+//        }
+
+        if (!InviteStatus.PENDING.equals(invitation.getStatusInvite())) {
+            throw new ForbiddenException("Invitation is not active");
+        }
+
+        invitation.setStatusInvite(InviteStatus.ACCEPTED);
+        collabBoardRepository.save(invitation);
     }
 
+    @Transactional
+    public void declineInvitation(String token, String inviteeUsername) {
+        Optional<CollabBoard> optionalInvitation = collabBoardRepository.findByToken(token);
+
+        if (!optionalInvitation.isPresent()) {
+            throw new ItemNotFoundException("Invitation not found");
+        }
+
+        CollabBoard invitation = optionalInvitation.get();
+
+        Users invitee = usersRepository.findByUsername(inviteeUsername)
+                .orElseThrow(() -> new ItemNotFoundException("Invitee not found"));
+
+        if (!invitation.getOid().equals(invitee.getOid())) {
+            throw new ForbiddenException("You are not authorized to decline this invitation");
+        }
+
+        if (!InviteStatus.PENDING.equals(invitation.getStatusInvite())) {
+            throw new ForbiddenException("Invitation is not active");
+        }
+
+        collabBoardRepository.delete(invitation);
+    }
+
+    // getAll (pending and accepted)
+    public Map<String, Object> getAllCollabs(String boardId) {
+        List<CollabBoard> collaborators = collabBoardRepository.findByBoardsId(boardId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("collaborators", collaborators);
+        return response;
+    }
+
+    public CollabResponseDTO getCollabByOid(String boardId, String collabOid) {
+        CollabBoard collab = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found"));
+        return modelMapper.map(collab, CollabResponseDTO.class);
+    }
+
+    @Transactional
     public CollabResponseDTO removeCollabFromBoard(String boardId, String collabOid) {
-        Boards board = boardsRepository.findById(boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
-
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = usersRepository.findByUsername(username);
-
-        boolean isOwner = board.getOid().equals(currentUser.getOid());
-        boolean isCollaborator = collabBoardRepository.existsByOidAndBoardsId(currentUser.getOid(), boardId);
-
-        if (!isOwner && !(isCollaborator && currentUser.getOid().equals(collabOid))) {
-            throw new ForbiddenException("You are not allowed to remove this collaborator.");
-        }
-
-        CollabBoard collabBoard = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found in the specified board."));
-
-        collabBoardRepository.delete(collabBoard);
-        return modelMapper.map(collabBoard, CollabResponseDTO.class);
+        CollabBoard collab = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found"));
+        collabBoardRepository.delete(collab);
+        return modelMapper.map(collab, CollabResponseDTO.class);
     }
 
+    // get frontend url from app.prop อย่าลืมเปลี่ยนตอน deploy
+    private String getFrontendUrl() {
+        return "http://localhost:5173";
+    }
 }

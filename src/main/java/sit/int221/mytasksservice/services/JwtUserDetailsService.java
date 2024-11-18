@@ -11,6 +11,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.config.AuthUser;
+import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
@@ -27,7 +28,7 @@ public class JwtUserDetailsService implements  UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        Users user = usersRepository.findByUsername(userName);
+        Users user = usersRepository.findByUsername(userName).orElseThrow(() -> new ItemNotFoundException("Inviter not found"));
 
         if (user == null) {
             user = usersRepository.findByOid(userName);

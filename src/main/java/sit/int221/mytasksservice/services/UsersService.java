@@ -9,6 +9,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.config.JwtTokenUtil;
+import sit.int221.mytasksservice.dtos.response.response.ItemNotFoundException;
 import sit.int221.mytasksservice.models.primary.PrimaryUsers;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.PrimaryUsersRepository;
@@ -54,7 +55,7 @@ public class UsersService {
         if (username.length() > 50 || rawPassword.length() < 8 || rawPassword.length() > 14) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        Users user = usersRepository.findByUsername(username);
+        Users user = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));
         if (user == null || !passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username or Password is incorrect");
         }

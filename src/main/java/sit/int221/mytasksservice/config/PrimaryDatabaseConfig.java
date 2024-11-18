@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -29,6 +30,7 @@ public class PrimaryDatabaseConfig {
     private DataSourceProperties primaryDataSourceProperties;
 
     @Bean(name = "primaryDataSource")
+    @Primary
     public DataSource primaryDataSource() {
         return DataSourceBuilder.create()
                 .driverClassName(primaryDataSourceProperties.getDriverClassName())
@@ -39,6 +41,7 @@ public class PrimaryDatabaseConfig {
     }
 
     @Bean(name = "primaryEntityManagerFactory")
+    @Primary
     public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory(
             @Qualifier("primaryDataSource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
@@ -50,6 +53,7 @@ public class PrimaryDatabaseConfig {
     }
 
     @Bean(name = "primaryTransactionManager")
+    @Primary
     public PlatformTransactionManager primaryTransactionManager(
             @Qualifier("primaryEntityManagerFactory") LocalContainerEntityManagerFactoryBean emf) {
         JpaTransactionManager transactionManager = new JpaTransactionManager();

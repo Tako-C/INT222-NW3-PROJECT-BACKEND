@@ -28,9 +28,23 @@ public class CollabBoard {
     @Column(name = "boards_id")
     private String boardsId;
 
+    @Column(name = "status_invite", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private InviteStatus statusInvite;
+
     @Column(insertable = false, updatable = false)
     private Timestamp added_on;
 
     @Column(insertable = false, updatable = false)
     private Timestamp updated_on;
+
+    @Column(name = "token", unique = true)
+    private String token;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.statusInvite == null) {
+            this.statusInvite = InviteStatus.PENDING;
+        }
+    }
 }
