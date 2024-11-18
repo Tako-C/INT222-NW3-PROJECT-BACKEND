@@ -143,9 +143,9 @@ public class CollabService {
         Users invitee = usersRepository.findByUsername(inviteeUsername)
                 .orElseThrow(() -> new ItemNotFoundException("Invitee not found"));
 
-        if (!invitation.getOid().equals(invitee.getOid())) {
-            throw new ForbiddenException("You are not authorized to decline this invitation");
-        }
+//        if (!invitation.getOid().equals(invitee.getOid())) {
+//            throw new ForbiddenException("You are not authorized to decline this invitation");
+//        }
 
         if (!InviteStatus.PENDING.equals(invitation.getStatusInvite())) {
             throw new ForbiddenException("Invitation is not active");

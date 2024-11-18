@@ -1,5 +1,6 @@
 package sit.int221.mytasksservice.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.CollabUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.InvitationRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
+import sit.int221.mytasksservice.dtos.response.response.InvitationResponseDTO;
 import sit.int221.mytasksservice.services.CollabService;
 
 import java.util.List;
@@ -60,35 +62,56 @@ public class CollabController {
     }
 
     @PostMapping("/collabs/invitations")
-    public ResponseEntity<String> sendInvitation(
+    public ResponseEntity<InvitationResponseDTO> sendInvitation(
             @PathVariable String boardId,
             @Valid @RequestBody InvitationRequestDTO invitationRequestDTO,
-            Authentication authentication
+            Authentication authentication,
+            HttpServletRequest request
     ) {
         String inviterUsername = authentication.getName();
         collabService.sendInvitation(boardId, invitationRequestDTO, inviterUsername);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Invitation sent successfully");
+        InvitationResponseDTO response = new InvitationResponseDTO(
+                HttpStatus.CREATED.value(),
+                "Invitation sent successfully",
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/collabs/invitations/accept")
-    public ResponseEntity<String> acceptInvitation(
+    public ResponseEntity<InvitationResponseDTO> acceptInvitation(
             @PathVariable String boardId,
             @RequestParam String token,
-            Authentication authentication
+            Authentication authentication,
+            HttpServletRequest request
     ) {
         String inviteeUsername = authentication.getName();
         collabService.acceptInvitation(token, inviteeUsername);
-        return ResponseEntity.ok("Invitation accepted");
+        InvitationResponseDTO response = new InvitationResponseDTO(
+                HttpStatus.OK.value(),
+                "Invitation accepted",
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/collabs/invitations/decline")
-    public ResponseEntity<String> declineInvitation(
+    public ResponseEntity<InvitationResponseDTO> declineInvitation(
             @PathVariable String boardId,
             @RequestParam String token,
-            Authentication authentication
+            Authentication authentication,
+            HttpServletRequest request
     ) {
         String inviteeUsername = authentication.getName();
         collabService.declineInvitation(token, inviteeUsername);
-        return ResponseEntity.ok("Invitation declined");
+        InvitationResponseDTO response = new InvitationResponseDTO(
+                HttpStatus.OK.value(),
+                "Invitation declined",
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
