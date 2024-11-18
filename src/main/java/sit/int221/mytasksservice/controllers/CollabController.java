@@ -13,6 +13,7 @@ import sit.int221.mytasksservice.dtos.response.request.CollabUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.InvitationRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.InvitationResponseDTO;
+import sit.int221.mytasksservice.models.primary.CollabBoard;
 import sit.int221.mytasksservice.services.CollabService;
 
 import java.util.List;
@@ -25,6 +26,9 @@ public class CollabController {
 
     @Autowired
     private CollabService collabService;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @GetMapping("/collabs")
     public ResponseEntity<Map<String, Object>> getAllCollabs(@PathVariable String boardId) {
@@ -69,11 +73,15 @@ public class CollabController {
             HttpServletRequest request
     ) {
         String inviterUsername = authentication.getName();
-        collabService.sendInvitation(boardId, invitationRequestDTO, inviterUsername);
+        CollabBoard collabBoard = collabService.sendInvitation(boardId, invitationRequestDTO, inviterUsername);
+
+        CollabResponseDTO collabResponseDTO = modelMapper.map(collabBoard, CollabResponseDTO.class);
+
         InvitationResponseDTO response = new InvitationResponseDTO(
                 HttpStatus.CREATED.value(),
                 "Invitation sent successfully",
-                request.getRequestURI()
+                request.getRequestURI(),
+                collabResponseDTO
         );
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -87,11 +95,15 @@ public class CollabController {
             HttpServletRequest request
     ) {
         String inviteeUsername = authentication.getName();
-        collabService.acceptInvitation(token, inviteeUsername);
+        CollabBoard collabBoard = collabService.acceptInvitation(token, inviteeUsername);
+
+        CollabResponseDTO collabResponseDTO = modelMapper.map(collabBoard, CollabResponseDTO.class);
+
         InvitationResponseDTO response = new InvitationResponseDTO(
                 HttpStatus.OK.value(),
                 "Invitation accepted",
-                request.getRequestURI()
+                request.getRequestURI(),
+                collabResponseDTO
         );
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -105,13 +117,16 @@ public class CollabController {
             HttpServletRequest request
     ) {
         String inviteeUsername = authentication.getName();
-        collabService.declineInvitation(token, inviteeUsername);
+        CollabBoard collabBoard = collabService.declineInvitation(token, inviteeUsername);
+
+        CollabResponseDTO collabResponseDTO = modelMapper.map(collabBoard, CollabResponseDTO.class);
+
         InvitationResponseDTO response = new InvitationResponseDTO(
                 HttpStatus.OK.value(),
                 "Invitation declined",
-                request.getRequestURI()
+                request.getRequestURI(),
+                collabResponseDTO
         );
-
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

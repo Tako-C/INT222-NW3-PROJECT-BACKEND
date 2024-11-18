@@ -16,4 +16,5 @@ public class InvitationResponseDTO {
     private int status;
     private String message;
     private String instance;
+    private CollabResponseDTO user;
 }

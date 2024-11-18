@@ -40,7 +40,7 @@ public class CollabService {
     private ModelMapper modelMapper;
 
     @Transactional
-    public void sendInvitation(String boardId, InvitationRequestDTO invitationRequestDTO, String inviterUsername) {
+    public CollabBoard sendInvitation(String boardId, InvitationRequestDTO invitationRequestDTO, String inviterUsername) {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
@@ -84,7 +84,7 @@ public class CollabService {
         invitation.setStatusInvite(InviteStatus.PENDING);
         invitation.setToken(UUID.randomUUID().toString());
 
-        collabBoardRepository.save(invitation);
+        CollabBoard savedInvitation = collabBoardRepository.save(invitation);
 
         // emailsender here
         try {
@@ -103,10 +103,11 @@ public class CollabService {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+        return savedInvitation;
     }
 
     @Transactional
-    public void acceptInvitation(String token, String inviteeUsername) {
+    public CollabBoard acceptInvitation(String token, String inviteeUsername) {
         Optional<CollabBoard> optionalInvitation = collabBoardRepository.findByToken(token);
 
         if (!optionalInvitation.isPresent()) {
@@ -127,11 +128,12 @@ public class CollabService {
         }
 
         invitation.setStatusInvite(InviteStatus.ACCEPTED);
-        collabBoardRepository.save(invitation);
+        CollabBoard savedInvitation = collabBoardRepository.save(invitation);
+        return savedInvitation;
     }
 
     @Transactional
-    public void declineInvitation(String token, String inviteeUsername) {
+    public CollabBoard declineInvitation(String token, String inviteeUsername) {
         Optional<CollabBoard> optionalInvitation = collabBoardRepository.findByToken(token);
 
         if (!optionalInvitation.isPresent()) {
@@ -151,7 +153,8 @@ public class CollabService {
             throw new ForbiddenException("Invitation is not active");
         }
 
-        collabBoardRepository.delete(invitation);
+        CollabBoard savedInvitation = collabBoardRepository.save(invitation);
+        return savedInvitation;
     }
 
     // getAll (pending and accepted)
