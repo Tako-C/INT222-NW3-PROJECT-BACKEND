@@ -19,6 +19,7 @@ public class CollabResponseDTO {
     private String email;
     private String accessRight;
     private String boardsId;
+    private String status;
     private Timestamp added_on;
     private Timestamp updated_on;
 }
