@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.CollabUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.InvitationRequestDTO;
+import sit.int221.mytasksservice.dtos.response.response.CollabListResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.InvitationResponseDTO;
 import sit.int221.mytasksservice.models.primary.CollabBoard;
@@ -31,8 +32,8 @@ public class CollabController {
     private ModelMapper modelMapper;
 
     @GetMapping("/collabs")
-    public ResponseEntity<Map<String, Object>> getAllCollabs(@PathVariable String boardId) {
-        Map<String, Object> collabResponse = collabService.getAllCollabs(boardId);
+    public ResponseEntity<CollabListResponseDTO> getAllCollabs(@PathVariable String boardId) {
+        CollabListResponseDTO collabResponse = collabService.getAllCollabs(boardId);
         return ResponseEntity.ok(collabResponse);
     }
 

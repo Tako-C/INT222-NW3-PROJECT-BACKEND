@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CollabService {
@@ -158,10 +159,33 @@ public class CollabService {
     }
 
     // getAll (pending and accepted)
-    public Map<String, Object> getAllCollabs(String boardId) {
+    @Transactional(readOnly = true)
+    public CollabListResponseDTO getAllCollabs(String boardId) {
+        // ดึงข้อมูล Collaborators
         List<CollabBoard> collaborators = collabBoardRepository.findByBoardsId(boardId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("collaborators", collaborators);
+
+        // ดึงข้อมูล Board
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        // ดึงข้อมูล Owner โดยใช้ users_oid จาก Board
+        String ownerOid = board.getOid();
+        Users owner = usersRepository.findByOid(ownerOid);
+
+        // แปลงข้อมูล Owner เป็น OwnerDTO
+        Owner ownerDTO = modelMapper.map(owner, Owner.class);
+
+        // แปลง Collaborators เป็น CollabResponseDTO
+        List<CollabResponseDTO> collabDTOs = collaborators.stream()
+                .map(collab -> modelMapper.map(collab, CollabResponseDTO.class))
+                .collect(Collectors.toList());
+
+        // สร้าง CollabListResponseDTO
+        CollabListResponseDTO response = new CollabListResponseDTO();
+        response.setBoardName(board.getBoard_name());
+        response.setOwner(ownerDTO);
+        response.setCollaborators(collabDTOs);
+
         return response;
     }
 
