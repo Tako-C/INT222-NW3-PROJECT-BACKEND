@@ -134,7 +134,7 @@ public class CollabService {
     }
 
     @Transactional
-    public CollabBoard declineInvitation(String token, String inviteeUsername) {
+    public CollabResponseDTO declineInvitation(String token, String inviteeUsername) {
         Optional<CollabBoard> optionalInvitation = collabBoardRepository.findByToken(token);
 
         if (!optionalInvitation.isPresent()) {
@@ -154,8 +154,10 @@ public class CollabService {
             throw new ForbiddenException("Invitation is not active");
         }
 
-        CollabBoard savedInvitation = collabBoardRepository.save(invitation);
-        return savedInvitation;
+        CollabResponseDTO collabResponseDTO = modelMapper.map(invitation, CollabResponseDTO.class);
+        collabBoardRepository.delete(invitation);
+
+        return collabResponseDTO;
     }
 
     // getAll (pending and accepted)

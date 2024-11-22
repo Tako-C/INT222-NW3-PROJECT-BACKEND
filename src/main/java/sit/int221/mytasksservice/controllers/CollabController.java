@@ -118,9 +118,7 @@ public class CollabController {
             HttpServletRequest request
     ) {
         String inviteeUsername = authentication.getName();
-        CollabBoard collabBoard = collabService.declineInvitation(token, inviteeUsername);
-
-        CollabResponseDTO collabResponseDTO = modelMapper.map(collabBoard, CollabResponseDTO.class);
+        CollabResponseDTO collabResponseDTO = collabService.declineInvitation(token, inviteeUsername);
 
         InvitationResponseDTO response = new InvitationResponseDTO(
                 HttpStatus.OK.value(),
