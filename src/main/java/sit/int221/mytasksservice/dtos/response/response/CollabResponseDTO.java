@@ -22,4 +22,5 @@ public class CollabResponseDTO {
     private String status;
     private Timestamp added_on;
     private Timestamp updated_on;
+    private String token;
 }
