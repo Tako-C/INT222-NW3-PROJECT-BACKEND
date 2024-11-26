@@ -6,7 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import sit.int221.mytasksservice.dtos.response.request.InvitationRequestDTO;
+import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
+import sit.int221.mytasksservice.dtos.response.request.CollabUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.*;
 import sit.int221.mytasksservice.models.primary.*;
 import sit.int221.mytasksservice.models.secondary.Users;
@@ -17,9 +18,7 @@ import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 import java.io.UnsupportedEncodingException;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,7 +40,7 @@ public class CollabService {
     private ModelMapper modelMapper;
 
     @Transactional
-    public CollabBoard sendInvitation(String boardId, InvitationRequestDTO invitationRequestDTO, String inviterUsername) {
+    public CollabBoard sendInvitation(String boardId, CollabAddRequestDTO invitationRequestDTO, String inviterUsername) {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
 
@@ -120,9 +119,9 @@ public class CollabService {
         Users invitee = usersRepository.findByUsername(inviteeUsername)
                 .orElseThrow(() -> new ItemNotFoundException("Invitee not found"));
 
-//        if (!invitation.getOid().equals(invitee.getOid())) {
-//            throw new ForbiddenException("You are not authorized to accept this invitation");
-//        }
+        if (!invitation.getOid().equals(invitee.getOid())) {
+            throw new ForbiddenException("You are not authorized to accept this invitation");
+        }
 
         if (!InviteStatus.PENDING.equals(invitation.getStatusInvite())) {
             throw new ForbiddenException("Invitation is not active");
@@ -146,9 +145,9 @@ public class CollabService {
         Users invitee = usersRepository.findByUsername(inviteeUsername)
                 .orElseThrow(() -> new ItemNotFoundException("Invitee not found"));
 
-//        if (!invitation.getOid().equals(invitee.getOid())) {
-//            throw new ForbiddenException("You are not authorized to decline this invitation");
-//        }
+        if (!invitation.getOid().equals(invitee.getOid())) {
+            throw new ForbiddenException("You are not authorized to decline this invitation");
+        }
 
         if (!InviteStatus.PENDING.equals(invitation.getStatusInvite())) {
             throw new ForbiddenException("Invitation is not active");
@@ -158,6 +157,46 @@ public class CollabService {
         collabBoardRepository.delete(invitation);
 
         return collabResponseDTO;
+    }
+
+    // update
+    @Transactional
+    public CollabResponseDTO updateInvitationAccessRight(String boardId, String collab_oid, CollabUpdateRequestDTO updateDTO, String ownerUsername) {
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        if (!board.getOid().equals(usersRepository.findByUsername(ownerUsername)
+                .orElseThrow(() -> new ItemNotFoundException("User not found")).getOid())) {
+            throw new ForbiddenException("You are not authorized to edit invitations for this board");
+        }
+
+        CollabBoard invitation = collabBoardRepository.findPendingInvitationByOidAndBoardId(collab_oid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Pending invitation not found"));
+
+        invitation.setAccessRight(updateDTO.getAccessRight());
+
+        CollabBoard updatedInvitation = collabBoardRepository.save(invitation);
+
+        return modelMapper.map(updatedInvitation, CollabResponseDTO.class);
+    }
+
+    // cancel pending inv.
+    @Transactional
+    public void cancelInvitation(String boardId, String collab_oid, String ownerUsername) {
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        Users owner = usersRepository.findByUsername(ownerUsername)
+                .orElseThrow(() -> new ItemNotFoundException("User not found"));
+
+        if (!board.getOid().equals(owner.getOid())) {
+            throw new ForbiddenException("You are not authorized to cancel invitations for this board");
+        }
+
+        CollabBoard invitation = collabBoardRepository.findPendingInvitationByOidAndBoardId(collab_oid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Pending invitation not found"));
+
+        collabBoardRepository.delete(invitation);
     }
 
     // getAll (pending and accepted)

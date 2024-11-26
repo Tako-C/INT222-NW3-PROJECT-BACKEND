@@ -28,11 +28,11 @@ public class JwtUserDetailsService implements  UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        Users user = usersRepository.findByUsername(userName).orElseThrow(() -> new ItemNotFoundException("Inviter not found"));
+        Users user = usersRepository.findByUsername(userName).orElse(usersRepository.findByOid(userName));
 
-        if (user == null) {
-            user = usersRepository.findByOid(userName);
-        }
+//        if (user == null) {
+//            user = usersRepository.findByOid(userName);
+//        }
 
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, userName + " does not exist !!");

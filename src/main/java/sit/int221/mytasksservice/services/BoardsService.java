@@ -36,12 +36,13 @@ public class BoardsService {
     public Map<String, Object> getAllBoards() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Set<Boards> boardsSet = new HashSet<>();
-        List<BoardsResponseDTO> collaborativeBoards = new ArrayList<>();
+        List<Map<String, Object>> collaborativeBoards = new ArrayList<>();
 
         if (username.equals("anonymousUser")) {
             boardsSet.addAll(boardsRepository.findPublicBoards());
         } else {
-            Users users = usersRepository.findByUsername(username).orElseThrow(() -> new ItemNotFoundException("User not found"));;
+            Users users = usersRepository.findByUsername(username)
+                    .orElseThrow(() -> new ItemNotFoundException("User not found"));
             boardsSet.addAll(boardsRepository.findByOidOrVisibility(users.getOid()));
 
             String loggedInOid = users.getOid();
@@ -56,17 +57,28 @@ public class BoardsService {
                             Owner ownerInfo = new Owner();
                             ownerInfo.setName(getOwnerByOid(board.getOid()).getName());
                             ownerInfo.setOid(board.getOid());
-
                             dto.setOwner(ownerInfo);
 
-                            CollabBoard collabInfo = collabBoardRepository.findAccessRightByBoardsIdAndOid(board.getBoardId(), loggedInOid)
+                            CollabBoard collabInfo = collabBoardRepository
+                                    .findAccessRightByBoardsIdAndOid(board.getBoardId(), loggedInOid)
                                     .orElse(null);
 
-                            if (collabInfo != null) {
-                                dto.setAccessRight(collabInfo.getAccessRight());
+                            Map<String, Object> boardMap = new HashMap<>();
+                            boardMap.put("boardId", dto.getBoardId());
+                            boardMap.put("owner", dto.getOwner());
+                            boardMap.put("board_name", dto.getBoard_name());
+                            boardMap.put("visibility", dto.getVisibility());
+                            boardMap.put("accessRight", dto.getAccessRight());
+                            boardMap.put("createdOn", dto.getCreatedOn());
+                            boardMap.put("updatedOn", dto.getUpdatedOn());
+
+                            if (collabInfo != null && collabInfo.getStatusInvite() != null) {
+                                boardMap.put("status", collabInfo.getStatusInvite().name());
+                            } else {
+                                boardMap.put("status", "PENDING");
                             }
 
-                            return dto;
+                            return boardMap;
                         })
                         .collect(Collectors.toList());
             }
@@ -79,7 +91,6 @@ public class BoardsService {
                     Owner ownerInfo = new Owner();
                     ownerInfo.setName(getOwnerByOid(board.getOid()).getName());
                     ownerInfo.setOid(board.getOid());
-
                     dto.setOwner(ownerInfo);
 
                     return dto;
@@ -87,8 +98,8 @@ public class BoardsService {
                 .collect(Collectors.toList());
 
         List<String> collabBoardIdsToRemove = collaborativeBoards.stream()
-                .map(BoardsResponseDTO::getBoardId)
-                .toList();
+                .map(board -> (String) board.get("boardId"))
+                .collect(Collectors.toList());
 
         personalBoards.removeIf(dto -> collabBoardIdsToRemove.contains(dto.getBoardId()));
 
@@ -98,9 +109,6 @@ public class BoardsService {
 
         return response;
     }
-
-
-
 
     public Boards createBoards(BoardsAddRequestDTO boardsAddRequestDTO) {
         Boards boards = modelMapper.map(boardsAddRequestDTO, Boards.class);

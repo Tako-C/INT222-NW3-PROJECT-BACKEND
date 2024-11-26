@@ -10,15 +10,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import sit.int221.mytasksservice.dtos.response.request.CollabAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.CollabUpdateRequestDTO;
-import sit.int221.mytasksservice.dtos.response.request.InvitationRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabListResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.InvitationResponseDTO;
 import sit.int221.mytasksservice.models.primary.CollabBoard;
 import sit.int221.mytasksservice.services.CollabService;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = {"http://localhost:5173","http://ip23nw3.sit.kmutt.ac.th:3333","http://intproj23.sit.kmutt.ac.th"})
@@ -69,7 +65,7 @@ public class CollabController {
     @PostMapping("/collabs/invitations")
     public ResponseEntity<InvitationResponseDTO> sendInvitation(
             @PathVariable String boardId,
-            @Valid @RequestBody InvitationRequestDTO invitationRequestDTO,
+            @Valid @RequestBody CollabAddRequestDTO invitationRequestDTO,
             Authentication authentication,
             HttpServletRequest request
     ) {
@@ -126,6 +122,46 @@ public class CollabController {
                 request.getRequestURI(),
                 collabResponseDTO
         );
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PatchMapping("/collabs/invitations/{collab_oid}")
+    public ResponseEntity<InvitationResponseDTO> updateInvitationAccessRight(
+            @PathVariable String boardId,
+            @PathVariable String collab_oid,
+            @Valid @RequestBody CollabUpdateRequestDTO updateDTO,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        String ownerUsername = authentication.getName();
+        CollabResponseDTO updatedCollab = collabService.updateInvitationAccessRight(boardId, collab_oid, updateDTO, ownerUsername);
+
+        InvitationResponseDTO response = new InvitationResponseDTO(
+                HttpStatus.OK.value(),
+                "Invitation access right updated",
+                request.getRequestURI(),
+                updatedCollab
+        );
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/collabs/invitations/{collab_oid}")
+    public ResponseEntity<InvitationResponseDTO> cancelInvitation(
+            @PathVariable String boardId,
+            @PathVariable String collab_oid,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        String ownerUsername = authentication.getName();
+        collabService.cancelInvitation(boardId, collab_oid, ownerUsername);
+
+        InvitationResponseDTO response = new InvitationResponseDTO(
+                HttpStatus.OK.value(),
+                "Invitation canceled",
+                request.getRequestURI(),
+                null
+        );
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
