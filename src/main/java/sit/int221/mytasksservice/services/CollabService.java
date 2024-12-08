@@ -170,8 +170,8 @@ public class CollabService {
             throw new ForbiddenException("You are not authorized to edit invitations for this board");
         }
 
-        CollabBoard invitation = collabBoardRepository.findPendingInvitationByOidAndBoardId(collab_oid, boardId)
-                .orElseThrow(() -> new ItemNotFoundException("Pending invitation not found"));
+        CollabBoard invitation = collabBoardRepository.findCollabByOidAndBoardsId(collab_oid, boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Collaborator not found"));
 
         invitation.setAccessRight(updateDTO.getAccessRight());
 
@@ -216,7 +216,6 @@ public class CollabService {
                 .map(collab -> modelMapper.map(collab, CollabResponseDTO.class))
                 .collect(Collectors.toList());
 
-        // สร้าง CollabListResponseDTO
         CollabListResponseDTO response = new CollabListResponseDTO();
         response.setBoardName(board.getBoard_name());
         response.setOwner(ownerDTO);

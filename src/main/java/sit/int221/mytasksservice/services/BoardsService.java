@@ -68,7 +68,7 @@ public class BoardsService {
                             boardMap.put("owner", dto.getOwner());
                             boardMap.put("board_name", dto.getBoard_name());
                             boardMap.put("visibility", dto.getVisibility());
-                            boardMap.put("accessRight", dto.getAccessRight());
+                            boardMap.put("accessRight", collabInfo.getAccessRight());
                             boardMap.put("createdOn", dto.getCreatedOn());
                             boardMap.put("updatedOn", dto.getUpdatedOn());
 
