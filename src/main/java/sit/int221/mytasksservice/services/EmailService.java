@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import sit.int221.mytasksservice.models.primary.Boards;
 import sit.int221.mytasksservice.models.secondary.Users;
@@ -24,6 +25,7 @@ public class EmailService {
     @Value("${app.team.code}")
     private String teamCode;
 
+    @Async
     public void sendInvitationEmailWithReplyTo(Users inviter, Users invitee, Boards board, String accessRight, String token) throws MessagingException, UnsupportedEncodingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
