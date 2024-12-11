@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import sit.int221.mytasksservice.dtos.response.response.CollabResponseDTO;
 import sit.int221.mytasksservice.models.primary.CollabBoard;
 import sit.int221.mytasksservice.models.primary.InviteStatus;
 
@@ -23,7 +22,6 @@ public interface CollabBoardRepository extends JpaRepository<CollabBoard, Intege
     boolean existsByOidAndBoardsIdAndAccessRight(String oid, String boardsId, String accessRight);
     boolean existsByOidAndBoardsIdAndStatusInvite(String oid, String boardsId, InviteStatus statusInvite);
     Optional<CollabBoard> findByToken(String token);
-    List<CollabBoard> findByOid(String oid);
     @Query("SELECT cb FROM CollabBoard cb WHERE cb.oid = :oid AND cb.boardsId = :boardId AND cb.statusInvite = 'PENDING'")
     Optional<CollabBoard> findPendingInvitationByOidAndBoardId(@Param("oid") String oid, @Param("boardId") String boardId);
 }

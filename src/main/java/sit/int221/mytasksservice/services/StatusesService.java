@@ -2,10 +2,8 @@ package sit.int221.mytasksservice.services;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.*;
@@ -67,7 +65,6 @@ public class StatusesService {
         }
     }
 
-
     public StatusDetailResponseDTO getStatusesByBoard_idAndByStatusID(String boardsId, Integer statusId) {
         Boards board = boardsRepository.findById(boardsId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
@@ -93,7 +90,6 @@ public class StatusesService {
             throw new ForbiddenException("Access Denied");
         }
     }
-
 
     public Statuses createNewStatus(StatusAddRequestDTO statusAddRequestDTO) {
         Users currentUser = checkBoardAccess(statusAddRequestDTO.getBoards());
@@ -189,11 +185,6 @@ public class StatusesService {
             status.setName(name.trim());
         }
     }
-//    private void checkStatusNameExists(String name) {
-//        if (statusesRepository.findByName(name) != null) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name already exists!");
-//        }
-//    }
 
     public Users checkBoardAccess(String boardId) {
         Boards board = boardsRepository.findById(boardId).orElseThrow(() -> new ItemNotFoundException("Board not found"));

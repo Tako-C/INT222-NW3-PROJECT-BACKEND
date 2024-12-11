@@ -18,19 +18,15 @@ public class Tasks {
     private String title;
     private String description;
     private String assignees;
-
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z", timezone = "UTC")
     @Column(insertable = false, updatable = false)
     private Timestamp createdOn;
-
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z", timezone = "UTC")
     @Column(insertable = false, updatable = false)
     private Timestamp updatedOn;
-
     @ManyToOne
     @JoinColumn(name = "status_id")
     private Statuses status;
-
     @ManyToOne
     @JoinColumn(name = "board_id")
     private Boards boards;

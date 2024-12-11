@@ -86,12 +86,11 @@ public class CollabService {
 
         CollabBoard savedInvitation = collabBoardRepository.save(invitation);
 
-        // emailsender here
         try {
             emailService.sendInvitationEmailWithReplyTo(inviter, invitee, board, invitation.getAccessRight(), invitation.getToken());
         } catch (MessagingException e) {
             throw new EmailSendingException(String.format(
-                    "We could not send e-mail to %s, he/she can accept the invitation at %s/board/%s/collab/invitations/accept?token=%s or decline at %s/board/%s/collab/invitations/decline?token=%s",
+                    "Could not send e-mail to %s, he/she can accept the invitation at %s/board/%s/collab/invitations/accept?token=%s or decline at %s/board/%s/collab/invitations/decline?token=%s",
                     invitee.getName(),
                     getFrontendUrl(),
                     board.getBoardId(),
@@ -159,7 +158,6 @@ public class CollabService {
         return collabResponseDTO;
     }
 
-    // update
     @Transactional
     public CollabResponseDTO updateInvitationAccessRight(String boardId, String collab_oid, CollabUpdateRequestDTO updateDTO, String ownerUsername) {
         Boards board = boardsRepository.findById(boardId)
@@ -180,7 +178,6 @@ public class CollabService {
         return modelMapper.map(updatedInvitation, CollabResponseDTO.class);
     }
 
-    // cancel pending inv.
     @Transactional
     public void cancelInvitation(String boardId, String collab_oid, String ownerUsername) {
         Boards board = boardsRepository.findById(boardId)
@@ -199,7 +196,6 @@ public class CollabService {
         collabBoardRepository.delete(invitation);
     }
 
-    // getAll (pending and accepted)
     @Transactional(readOnly = true)
     public CollabListResponseDTO getAllCollabs(String boardId) {
         List<CollabBoard> collaborators = collabBoardRepository.findByBoardsId(boardId);
@@ -238,7 +234,6 @@ public class CollabService {
         return modelMapper.map(collab, CollabResponseDTO.class);
     }
 
-    // get frontend url from app.prop อย่าลืมเปลี่ยนตอน deploy
     private String getFrontendUrl() {
         return "http://localhost:5173";
     }

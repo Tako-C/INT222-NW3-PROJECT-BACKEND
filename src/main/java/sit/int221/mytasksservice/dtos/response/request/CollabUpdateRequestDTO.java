@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CollabUpdateRequestDTO {
     @NotBlank
-    @Pattern(regexp = "^(read|write)$", message = "Access right must be 'read' or 'write'")
+    @Pattern(regexp = "^(read|write)$",
+            message = "Access right must be 'read' or 'write'")
     private String accessRight;
 }

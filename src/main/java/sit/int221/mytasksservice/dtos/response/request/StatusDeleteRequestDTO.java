@@ -10,5 +10,4 @@ public class StatusDeleteRequestDTO {
     private String name;
     private String description;
     private String boards;
-
 }

@@ -1,6 +1,5 @@
 package sit.int221.mytasksservice.dtos.response.response;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

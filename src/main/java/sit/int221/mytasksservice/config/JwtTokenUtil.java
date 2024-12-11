@@ -24,19 +24,20 @@ public class JwtTokenUtil implements Serializable {
     private long JWT_REFRESH_TOKEN_VALIDITY;
 
     SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-    public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
-    }
+
     public String getOid(String token) {
         return getAllClaimsFromToken(token).get("oid", String.class);
     }
+
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
+
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);
     }
+
     public Claims getAllClaimsFromToken(String token) {
         Claims claims = Jwts.parser().setSigningKey(SECRET_KEY)
                 .parseClaimsJws(token).getBody();
@@ -48,7 +49,6 @@ public class JwtTokenUtil implements Serializable {
     }
 
     public String generateToken(UserDetails userDetails) {
-
         AuthUser authUser = (AuthUser) userDetails;
         Map<String, Object> claims = new HashMap<>();
         claims.put("iss", "https://intproj23.sit.kmutt.ac.th/nw3");
@@ -66,26 +66,16 @@ public class JwtTokenUtil implements Serializable {
         return doGenerateToken(claims, userDetails.getUsername(), JWT_REFRESH_TOKEN_VALIDITY);
     }
 
-    //    private String doGenerateToken(Map<String, Object> claims, String subject) {
-//        return Jwts.builder().setHeaderParam("typ", "JWT").setClaims(claims).setSubject(subject)
-//                .setIssuedAt(new Date(System.currentTimeMillis()))
-//                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
-//                .signWith(signatureAlgorithm, SECRET_KEY).compact();
-//
-//    }
-
     private String doGenerateToken(Map<String, Object> claims, String subject, long validity) {
         long now = System.currentTimeMillis();
-        Date expiration = new Date(now + validity); // exp (expiration)
-        Date issuedAt = new Date(now); // iat (issued at)
-
-
+        Date expiration = new Date(now + validity);
+        Date issuedAt = new Date(now);
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(issuedAt) // iat
-                .setExpiration(expiration) // exp
+                .setIssuedAt(issuedAt)
+                .setExpiration(expiration)
                 .signWith(signatureAlgorithm, SECRET_KEY)
                 .compact();
     }
@@ -98,7 +88,4 @@ public class JwtTokenUtil implements Serializable {
         return !isTokenExpired(token);
     }
 
-    public String getSecretKey() {
-        return SECRET_KEY;
-    }
 }

@@ -13,9 +13,7 @@ public class JwtRequestDTO {
     @NotBlank
     @Size(max = 50, message = "Username or password is invalid")
     private String userName;
-
     @NotBlank
     @Size(min = 8,max = 14, message = "Username or password is invalid")
     private String password;
-
 }

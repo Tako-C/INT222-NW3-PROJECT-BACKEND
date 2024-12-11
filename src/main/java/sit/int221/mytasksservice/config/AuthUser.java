@@ -7,34 +7,22 @@ import org.springframework.security.core.userdetails.UserDetails;
 import sit.int221.mytasksservice.models.secondary.Users;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @Getter
 @Setter
 public class AuthUser extends Users implements UserDetails, Serializable {
-
-//    public AuthUser() {
-//        super("anonymous", "", new ArrayList<GrantedAuthority>());
-//    }
-//
-//    public AuthUser(String userName, String password) {
-//        super(userName, password, new ArrayList<GrantedAuthority>());
-//    }
-
-    public AuthUser(String oid, String name, String userName, String password, String email, String role, Collection<? extends GrantedAuthority> authorities) {
-        super(userName, password, authorities);
+    public AuthUser(String oid, String name, String userName, String password, String email, String role) {
+        super(userName, password);
         this.oid = oid;
         this.name = name;
         this.email = email;
         this.role = role;
     }
 
-//    @Override
-//    public Collection<? extends GrantedAuthority> getAuthorities() {
-//        return super.getAuthorities();
-//    }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() { return List.of(); }
 
     @Override
     public String getPassword() {
@@ -47,19 +35,13 @@ public class AuthUser extends Users implements UserDetails, Serializable {
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    public boolean isAccountNonExpired() { return false; }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return false; }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+    public boolean isCredentialsNonExpired() { return false; }
 
     @Override
     public boolean isEnabled() {

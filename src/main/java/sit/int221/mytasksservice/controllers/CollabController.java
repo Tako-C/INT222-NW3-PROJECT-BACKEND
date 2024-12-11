@@ -39,21 +39,6 @@ public class CollabController {
         return ResponseEntity.ok(collabResponseDTO);
     }
 
-//    @PostMapping("/collabs")
-//    public ResponseEntity<CollabResponseDTO> addCollabToBoard(@PathVariable String boardId, @Valid @RequestBody CollabAddRequestDTO collabAddRequestDTO) {
-//        CollabResponseDTO newCollab = collabService.addCollabToBoard(boardId, collabAddRequestDTO);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(newCollab);
-//    }
-
-//    @PatchMapping("/collabs/{collab_oid}")
-//    public ResponseEntity<CollabResponseDTO> updateCollabAccessRight(
-//            @PathVariable String boardId,
-//            @PathVariable String collab_oid,
-//            @Valid @RequestBody CollabUpdateRequestDTO collabUpdateRequestDTO) {
-//        CollabResponseDTO updatedCollab = collabService.updateCollabAccessRight(boardId, collab_oid, collabUpdateRequestDTO);
-//        return ResponseEntity.ok(updatedCollab);
-//    }
-
     @DeleteMapping("/collabs/{collab_oid}")
     public ResponseEntity<CollabResponseDTO> removeCollabFromBoard(
             @PathVariable String boardId,
@@ -102,7 +87,6 @@ public class CollabController {
                 request.getRequestURI(),
                 collabResponseDTO
         );
-
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -161,7 +145,6 @@ public class CollabController {
                 request.getRequestURI(),
                 null
         );
-
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

@@ -1,6 +1,5 @@
 package sit.int221.mytasksservice.services;
 
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,7 +18,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 public class BoardsService {
     @Autowired
     private BoardsRepository boardsRepository;
@@ -149,7 +147,7 @@ public class BoardsService {
     public Users findByOid(String oid) {
         Users user = usersRepository.findByOid(oid);
         if (user == null) {
-            throw new ItemNotFoundException();
+            throw new ItemNotFoundException("Oid not found");
         }
         return user;
     }

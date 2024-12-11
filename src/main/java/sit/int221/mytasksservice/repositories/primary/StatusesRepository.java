@@ -7,7 +7,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface StatusesRepository extends JpaRepository<Statuses, Integer> {
-    Optional<Statuses> findByName(String name);
     Optional<Statuses> findByStatusIdAndBoardsBoardId(Integer statusId , String boardId);
-
 }

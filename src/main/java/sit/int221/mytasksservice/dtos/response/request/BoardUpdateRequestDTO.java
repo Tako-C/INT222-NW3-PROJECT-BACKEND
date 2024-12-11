@@ -9,6 +9,7 @@ import lombok.Setter;
 @Getter
 public class BoardUpdateRequestDTO {
     @NotBlank
-    @Pattern(regexp = "^(private|public)$", message = "Visibility must be 'private' or 'public'")
+    @Pattern(regexp = "^(private|public)$",
+            message = "Visibility must be 'private' or 'public'")
     private String visibility;
 }

@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class AppErrorHandler {
-
     @ResponseStatus(code = HttpStatus.NOT_FOUND)
     @ExceptionHandler(value = ItemNotFoundException.class)
     public Map<String, Object> handleItemNotFoundException(ItemNotFoundException ex, HttpServletRequest request) {
@@ -54,16 +53,6 @@ public class AppErrorHandler {
         errors.put("message", ex.getMessage());
         return errors;
     }
-
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public Map<String, Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
-//        Map<String, Object> errors = new LinkedHashMap<>();
-//        errors.put("timestamp", LocalDateTime.now());
-//        errors.put("status", HttpStatus.BAD_REQUEST.value());
-//        errors.put("message", ex.getBindingResult().getFieldError().getDefaultMessage());
-//        return errors;
-//    }
 
     @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(ResponseStatusException.class)
@@ -119,7 +108,7 @@ public class AppErrorHandler {
 
         if (boardId != null) {
             try {
-                tasksService.checkBoardAccess(boardId); // ตรวจสอบการเข้าถึงบอร์ด
+                tasksService.checkBoardAccess(boardId);
             } catch (ItemNotFoundException e) {
                 Map<String, Object> errors = new LinkedHashMap<>();
                 errors.put("timestamp", LocalDateTime.now());

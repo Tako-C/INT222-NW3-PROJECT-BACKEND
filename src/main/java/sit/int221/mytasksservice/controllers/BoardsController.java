@@ -11,14 +11,12 @@ import sit.int221.mytasksservice.dtos.response.request.BoardUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.BoardsAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.StatusAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.BoardDetailResponseDTO;
-import sit.int221.mytasksservice.dtos.response.response.BoardsResponseDTO;
 import sit.int221.mytasksservice.models.primary.Boards;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.services.BoardsService;
 import sit.int221.mytasksservice.services.StatusesService;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 
@@ -67,7 +65,6 @@ public class BoardsController {
         createAndAddStatus("Doing", "Being worked on", generatedBoardId);
         createAndAddStatus("To Do", "This is To Do", generatedBoardId);
 
-
         URI location = URI.create("/boards/" + generatedBoardId);
         return ResponseEntity.created(location).body(addRequestDTO);
     }
@@ -78,7 +75,6 @@ public class BoardsController {
         createStatus.setName(name);
         createStatus.setDescription(description);
         createStatus.setBoards(boardId);
-
         statusesService.createNewStatus(createStatus);
     }
 
@@ -89,7 +85,8 @@ public class BoardsController {
     }
 
     @PatchMapping("/boards/{boardId}")
-    public ResponseEntity<BoardUpdateRequestDTO> updateBoardVisibility(@PathVariable("boardId") String id,@Valid @RequestBody BoardUpdateRequestDTO boardUpdateRequestDTO) {
+    public ResponseEntity<BoardUpdateRequestDTO> updateBoardVisibility(@PathVariable("boardId") String id,
+                                                                       @Valid @RequestBody BoardUpdateRequestDTO boardUpdateRequestDTO) {
         BoardUpdateRequestDTO updatedBoard = boardsService.updateBoardVisibility(id, boardUpdateRequestDTO);
         return ResponseEntity.ok(updatedBoard);
     }

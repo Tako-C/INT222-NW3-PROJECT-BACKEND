@@ -12,8 +12,8 @@ public class CollabAddRequestDTO {
     @Pattern(regexp = "^[^@\\s]+@[^@\\s]+\\.(co|th|com)$",
             message = "Email must be in the format: name@domain.co.th, name@domain.com, etc.")
     private String inviteeEmail;
-
     @NotBlank
-    @Pattern(regexp = "^(read|write)$", message = "Access right must be 'read' or 'write'")
+    @Pattern(regexp = "^(read|write)$",
+            message = "Access right must be 'read' or 'write'")
     private String accessRight;
 }

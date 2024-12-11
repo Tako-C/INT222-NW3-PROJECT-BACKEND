@@ -39,18 +39,6 @@ public class TasksService {
     @Autowired
     private CollabBoardRepository collabBoardRepository;
 
-//    public List<TaskTableResponseDTO> getAllTasksByBoardId(String boardsId) {
-//        List<Tasks> tasks = tasksRepository.findByBoardsBoardId(boardsId);
-//
-//        return tasks.stream().map(task -> {
-//            TaskTableResponseDTO taskDTO = modelMapper.map(task, TaskTableResponseDTO.class);
-//            taskDTO.setStatusName(task.getStatus().getName());
-//            taskDTO.setBoardName(task.getBoards().getBoard_name());
-//            return taskDTO;
-//        }).collect(Collectors.toList());
-//    }
-
-    //============================== Get TaskAll(Filter&Sort) ==========================================================
     public List<TaskTableResponseDTO> getAllTasksByBoardId(String boardId, String sortBy, List<String> filterStatuses) {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
@@ -94,9 +82,6 @@ public class TasksService {
         }
     }
 
-
-
-    //============================== Get Task ==========================================================================
     public TaskDetailResponseDTO getTaskByBoardIdAndByTaskID(String boardId, Integer tasksId) {
         Boards board = boardsRepository.findById(boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Board not found"));
@@ -126,9 +111,6 @@ public class TasksService {
         }
     }
 
-
-
-    //=============================== create Task ======================================================================
     public Tasks createNewTask(TaskAddRequestDTO taskAddRequestDTO, String boardsId) {
         Users currentUser = checkBoardAccess(boardsId);
 
@@ -145,7 +127,6 @@ public class TasksService {
         return tasksRepository.save(task);
     }
 
-    //======================================= Update Task =============================================================
     public Tasks updateTask(TaskUpdateRequestDTO taskUpdateRequestDTO, Integer taskId, String boardId) {
         Users currentUser = checkBoardAccess(boardId);
 
@@ -172,8 +153,6 @@ public class TasksService {
         return tasksRepository.save(task);
     }
 
-    //======================================= Delete Task =============================================================
-
     public Tasks deleteTask(String boardId, Integer tasksId) {
         Users currentUser = checkBoardAccess(boardId);
 
@@ -184,15 +163,12 @@ public class TasksService {
         return task;
     }
 
-
-
-
-    //======================================= Function Use =============================================================
     private void trimTaskFields(Tasks task) {
         task.setAssignees(task.getAssignees() != null ? task.getAssignees().trim() : null);
         task.setTitle(task.getTitle() != null ? task.getTitle().trim() : null);
         task.setDescription(task.getDescription() != null ? task.getDescription().trim() : null);
     }
+
     private void validateStatus(String status) {
         if (status == null || status.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status is required!");
@@ -206,6 +182,7 @@ public class TasksService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status ID format");
         }
     }
+
     private void processTaskFields(Tasks task, String description, String assignees) {
         trimTaskFields(task);
 

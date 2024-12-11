@@ -1,7 +1,6 @@
 package sit.int221.mytasksservice.controllers;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.config.JwtTokenUtil;
 import sit.int221.mytasksservice.dtos.response.request.JwtRequestDTO;
-import sit.int221.mytasksservice.dtos.response.response.LoginResponseDTO;
 import sit.int221.mytasksservice.dtos.response.response.RefreshTokenDTO;
 import sit.int221.mytasksservice.dtos.response.response.UsersDTO;
 import sit.int221.mytasksservice.dtos.response.response.jwtResponseDTO;
@@ -22,10 +20,8 @@ import sit.int221.mytasksservice.services.UsersService;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Slf4j
 @RestController
 @CrossOrigin(origins = {"http://localhost:5173","http://ip23nw3.sit.kmutt.ac.th:3333","http://intproj23.sit.kmutt.ac.th"})
-// @RequestMapping("")
 
 public class UsersController {
 

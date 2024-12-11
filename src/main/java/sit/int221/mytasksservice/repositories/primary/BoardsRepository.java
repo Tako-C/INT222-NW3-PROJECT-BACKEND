@@ -10,7 +10,6 @@ public interface BoardsRepository extends JpaRepository<Boards, String> {
     List<Boards> findByBoardIdIn(List<String> boardIds);
     @Query("SELECT b FROM Boards b LEFT JOIN FETCH b.tasks LEFT JOIN FETCH b.statuses WHERE b.visibility = 'Public'")
     List<Boards> findPublicBoards();
-
     @Query("SELECT b FROM Boards b LEFT JOIN FETCH b.tasks LEFT JOIN FETCH b.statuses WHERE b.oid = ?1 OR b.visibility = 'Public'")
     List<Boards> findByOidOrVisibility(String oid);
 }
