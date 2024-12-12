@@ -227,9 +227,20 @@ public class CollabService {
     }
 
     @Transactional
-    public CollabResponseDTO removeCollabFromBoard(String boardId, String collabOid) {
+    public CollabResponseDTO removeCollabFromBoard(String boardId, String collabOid, String ownerUsername) {
         CollabBoard collab = collabBoardRepository.findCollabByOidAndBoardsId(collabOid, boardId)
                 .orElseThrow(() -> new ItemNotFoundException("Collaborator not found"));
+
+        Boards board = boardsRepository.findById(boardId)
+                .orElseThrow(() -> new ItemNotFoundException("Board not found"));
+
+        Users owner = usersRepository.findByUsername(ownerUsername)
+                .orElseThrow(() -> new ItemNotFoundException("User not found"));
+
+        if (!board.getOid().equals(owner.getOid())) {
+            throw new ForbiddenException("You are not authorized to cancel invitations for this board");
+        }
+
         collabBoardRepository.delete(collab);
         return modelMapper.map(collab, CollabResponseDTO.class);
     }

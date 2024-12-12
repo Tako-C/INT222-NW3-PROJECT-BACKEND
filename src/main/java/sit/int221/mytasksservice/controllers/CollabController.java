@@ -42,8 +42,11 @@ public class CollabController {
     @DeleteMapping("/collabs/{collab_oid}")
     public ResponseEntity<CollabResponseDTO> removeCollabFromBoard(
             @PathVariable String boardId,
-            @PathVariable String collab_oid) {
-        CollabResponseDTO removedCollab = collabService.removeCollabFromBoard(boardId, collab_oid);
+            @PathVariable String collab_oid,
+            Authentication authentication) {
+        String ownerUsername = authentication.getName();
+
+        CollabResponseDTO removedCollab = collabService.removeCollabFromBoard(boardId, collab_oid, ownerUsername);
         return ResponseEntity.ok(removedCollab);
     }
 

@@ -10,14 +10,13 @@ import org.springframework.web.server.ResponseStatusException;
 import sit.int221.mytasksservice.dtos.response.request.TaskAddRequestDTO;
 import sit.int221.mytasksservice.dtos.response.request.TaskUpdateRequestDTO;
 import sit.int221.mytasksservice.dtos.response.response.*;
-import sit.int221.mytasksservice.models.primary.Boards;
-import sit.int221.mytasksservice.models.primary.Statuses;
-import sit.int221.mytasksservice.models.primary.Tasks;
+import sit.int221.mytasksservice.models.primary.*;
 import sit.int221.mytasksservice.models.secondary.Users;
 import sit.int221.mytasksservice.repositories.primary.*;
 import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 @Service
 public class TasksService {
@@ -209,6 +208,13 @@ public class TasksService {
 
             boolean isOwner = board.getOid().equals(currentUser.getOid());
             boolean isCollaboratorWithWriteAccess = collabBoardRepository.existsByOidAndBoardsIdAndAccessRight(currentUser.getOid(), boardId, "write");
+
+            Optional<CollabBoard> optionalInvitation = collabBoardRepository.findCollabByOidAndBoardsId(currentUser.getOid(), boardId);
+            CollabBoard invitation = optionalInvitation.get();
+
+            if (InviteStatus.PENDING.equals(invitation.getStatusInvite())) {
+                throw new ForbiddenException("You're not collaborator");
+            }
 
             if (!isOwner && !isCollaboratorWithWriteAccess) {
                 throw new ForbiddenException("Access Denied");

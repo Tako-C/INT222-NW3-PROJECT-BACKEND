@@ -17,6 +17,7 @@ import sit.int221.mytasksservice.repositories.secondary.UsersRepository;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -196,6 +197,12 @@ public class StatusesService {
 
             boolean isOwner = board.getOid().equals(currentUser.getOid());
             boolean isCollaboratorWithWriteAccess = collabBoardRepository.existsByOidAndBoardsIdAndAccessRight(currentUser.getOid(), boardId, "write");
+            Optional<CollabBoard> optionalInvitation = collabBoardRepository.findCollabByOidAndBoardsId(currentUser.getOid(), boardId);
+            CollabBoard invitation = optionalInvitation.get();
+
+            if (InviteStatus.PENDING.equals(invitation.getStatusInvite())) {
+                throw new ForbiddenException("You're not collaborator");
+            }
 
             if (!isOwner && !isCollaboratorWithWriteAccess) {
                 throw new ForbiddenException("Access Denied");
